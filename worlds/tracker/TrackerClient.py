@@ -37,7 +37,7 @@ if not sys.stdout:  # to make sure sm varia's "i'm working" dots don't break UT 
 
 logger = logging.getLogger("Client")
 
-UT_VERSION = "v0.1.16 RC1"
+UT_VERSION = "v0.2.0"
 DEBUG = False
 ITEMS_HANDLING = 0b111
 REGEN_WORLDS = {name for name, world in AutoWorld.AutoWorldRegister.world_types.items() if getattr(world, "ut_can_gen_without_yaml", False)}
@@ -203,15 +203,23 @@ class TrackerGameContext(CommonContext):
         self.quit_after_update = quit_after_update
 
     def load_pack(self):
-        PACK_NAME = self.multiworld.worlds[self.player_id].__class__.__module__
         self.maps = []
-        for map_page in self.tracker_world.map_page_maps:
-            self.maps += load_json(PACK_NAME, f"/{self.tracker_world.map_page_folder}/{map_page}")
         self.locs = []
-        for loc_page in self.tracker_world.map_page_locations:
-            self.locs += load_json(PACK_NAME, f"/{self.tracker_world.map_page_folder}/{loc_page}")
+        if self.tracker_world.externalPackKey:
+            from zipfile import is_zipfile
+            packRef = self.multiworld.worlds[self.player_id].settings[self.tracker_world.externalPackKey]
+            if is_zipfile(packRef):
+                for map_page in self.tracker_world.map_page_maps:
+                    self.maps += load_json_zip(packRef, f"/{self.tracker_world.map_page_folder}/{map_page}")
+                for loc_page in self.tracker_world.map_page_locations:
+                    self.locs += load_json_zip(packRef, f"/{self.tracker_world.map_page_folder}/{loc_page}")
+        else:
+            PACK_NAME = self.multiworld.worlds[self.player_id].__class__.__module__
+            for map_page in self.tracker_world.map_page_maps:
+                self.maps += load_json(PACK_NAME, f"/{self.tracker_world.map_page_folder}/{map_page}")
+            for loc_page in self.tracker_world.map_page_locations:
+                self.locs += load_json(PACK_NAME, f"/{self.tracker_world.map_page_folder}/{loc_page}")
         self.load_map(None)
-
 
     def load_map(self,map_id:Union[int, str, None]):
         """REMEMBER TO RUN UPDATE_TRACKER!"""
@@ -236,9 +244,18 @@ class TrackerGameContext(CommonContext):
                 map_id = int(map_id)
             m = self.maps[map_id]
         location_name_to_id=AutoWorld.AutoWorldRegister.world_types[self.game].location_name_to_id
-        PACK_NAME = self.multiworld.worlds[self.player_id].__class__.__module__
         # m = [m for m in self.maps if m["name"] == map_name]
-        self.ui.source = f"ap:{PACK_NAME}/{self.tracker_world.map_page_folder}/{m['img']}"
+        if self.tracker_world.externalPackKey:
+            from zipfile import is_zipfile
+            packRef = self.multiworld.worlds[self.player_id].settings[self.tracker_world.externalPackKey]
+            if is_zipfile(packRef):
+                self.ui.source = f"ap:zip:${packRef}/{self.tracker_world.map_page_folder}/{m['img']}"
+            else:
+                logger.error("Player poptracker doesn't seem to exist :< (must be a zip file)")
+                return
+        else:
+            PACK_NAME = self.multiworld.worlds[self.player_id].__class__.__module__
+            self.ui.source = f"ap:{PACK_NAME}/{self.tracker_world.map_page_folder}/{m['img']}"
         self.ui.loc_size = m["location_size"] if "location_size" in m else 65 #default location size per poptracker/src/core/map.h
         self.ui.loc_border = m["location_border_thickness"] if "location_border_thickness" in m else 8 #default location size per poptracker/src/core/map.h
         temp_locs = [location for location in self.locs]
@@ -285,10 +302,8 @@ class TrackerGameContext(CommonContext):
         from kivy.uix.recycleview import RecycleView
         from kivy.uix.widget import Widget
         from kivy.properties import StringProperty, NumericProperty, BooleanProperty
-        try:
-            from kvui import ApAsyncImage #one of these needs to be loaded
-        except ImportError:
-            from .TrackerKivy import ApAsyncImage #use local until ap#3629 gets merged/released
+        from kvui import ApAsyncImage #one of these needs to be loaded
+        from .TrackerKivy import SomethingNeatJustToMakePythonHappy
 
         class TrackerLayout(BoxLayout):
             pass
@@ -709,6 +724,13 @@ def load_json(pack, path):
     import pkgutil
     import json
     return json.loads(pkgutil.get_data(pack, path).decode('utf-8-sig'))
+
+def load_json_zip(pack, path):
+    import json
+    import zipfile
+    with zipfile.ZipFile(pack) as parentFile:
+        with parentFile.open(path) as childFile:
+            return json.loads(childFile.read().decode('utf-8-sig'))
 
 def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
     if ctx.player_id is None or ctx.multiworld is None:

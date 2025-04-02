@@ -81,10 +81,13 @@ class UTMapTabData:
     map_page_index: Callable[[Any], int]
     """Function that gets called to map the data storage string to the map index"""
 
+    externalPackKey: str
+    """Settings key to get the path reference of the poptracker pack on user's filesystem"""
+
     def __init__(
             self, map_page_folder: str = "", map_page_maps: Union[List[str], str] = "",
             map_page_locations: Union[List[str], str] = "", map_page_setting_key: str | None = None,
-            map_page_index: Callable[[Any], int] | None = None, **kwargs):
+            map_page_index: Callable[[Any], int] | None = None, externalPackKey: str = "", **kwargs):
         self.map_page_folder = map_page_folder
         if isinstance(map_page_maps, str):
             self.map_page_maps = [map_page_maps]
@@ -99,7 +102,7 @@ class UTMapTabData:
             self.map_page_index = map_page_index
         else:
             self.map_page_index = lambda _: 0
-        pass
+        self.externalPackKey = externalPackKey
 
 
 icon_paths["ut_ico"] = f"ap:{__name__}/icon.png"
