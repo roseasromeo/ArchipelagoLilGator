@@ -487,6 +487,8 @@ class TrackerGameContext(CommonContext):
                 if getattr(connected_cls, "disable_ut", False):
                     self.log_to_tab("World Author has requested UT be disabled on this world, please respect their decision")
                     return
+                if self.checksums[self.game] != connected_cls.get_data_package_data()["checksum"]:
+                    logger.warning("*****\nWarning: the local datapackage for the connected game does not match the server's datapackage\n*****")
                 # first check if we don't need a yaml
                 if getattr(connected_cls, "ut_can_gen_without_yaml", False):
                     with tempfile.TemporaryDirectory() as tempdir:
