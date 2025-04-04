@@ -84,14 +84,14 @@ class UTMapTabData:
     external_pack_key: str
     """Settings key to get the path reference of the poptracker pack on user's filesystem"""
 
-    poptracker_name_mapping: Dict[str,str]
-    """Mapping from [poptracker name : datapackage name] """
+    poptracker_name_mapping: Dict[str,int]
+    """Mapping from [poptracker name : datapackage location id] """
 
     def __init__(
-            self, map_page_folder: str = "", map_page_maps: Union[List[str], str] = "",
+            self, player_id, team_id,map_page_folder: str = "", map_page_maps: Union[List[str], str] = "",
             map_page_locations: Union[List[str], str] = "", map_page_setting_key: str | None = None,
             map_page_index: Callable[[Any], int] | None = None, external_pack_key: str = "",
-            poptracker_name_mapping: Dict[str,str] | None = None, **kwargs):
+            poptracker_name_mapping: Dict[str,int] | None = None, **kwargs):
         self.map_page_folder = map_page_folder
         if isinstance(map_page_maps, str):
             self.map_page_maps = [map_page_maps]
@@ -102,6 +102,8 @@ class UTMapTabData:
         else:
             self.map_page_locations = map_page_locations
         self.map_page_setting_key = map_page_setting_key
+        if isinstance(self.map_page_setting_key,str):
+            self.map_page_setting_key = self.map_page_setting_key.format(player=player_id,team=team_id)
         if map_page_index and callable(map_page_index):
             self.map_page_index = map_page_index
         else:

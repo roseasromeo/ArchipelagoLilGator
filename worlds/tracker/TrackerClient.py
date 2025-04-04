@@ -37,7 +37,7 @@ if not sys.stdout:  # to make sure sm varia's "i'm working" dots don't break UT 
 
 logger = logging.getLogger("Client")
 
-UT_VERSION = "v0.2.0"
+UT_VERSION = "v0.2.2"
 DEBUG = False
 ITEMS_HANDLING = 0b111
 REGEN_WORLDS = {name for name, world in AutoWorld.AutoWorldRegister.world_types.items() if getattr(world, "ut_can_gen_without_yaml", False)}
@@ -157,6 +157,7 @@ class TrackerCommandProcessor(ClientCommandProcessor):
     def _cmd_toggle_auto_tab(self):
         """Toggle the auto map tabbing function"""
         self.ctx.auto_tab = not self.ctx.auto_tab
+        logger.info(f"Auto tracking currently {'Enabled' if self.ctx.auto_tab else 'Disabled'}")
 
 
 class TrackerGameContext(CommonContext):
@@ -268,17 +269,17 @@ class TrackerGameContext(CommonContext):
                 temp_locs.extend(temp_loc["children"])
         self.coords = {
             (map_loc["x"], map_loc["y"]) :
-                [ section["name"] for section in location["sections"] if "name" in section and section["name"] in location_name_to_id and location_name_to_id[section["name"]] in self.server_locations ]
+                [ location_name_to_id[section["name"]] for section in location["sections"] if "name" in section and section["name"] in location_name_to_id and location_name_to_id[section["name"]] in self.server_locations ]
             for location in map_locs
             for map_loc in location["map_locations"]
             if map_loc["map"] == m["name"] and any("name" in section and section["name"] in location_name_to_id and location_name_to_id[section["name"]] in self.server_locations for section in location["sections"])
         }
         tempCoords = { #compat coords
             (map_loc["x"], map_loc["y"]) :
-                [ self.tracker_world.poptracker_name_mapping[section["name"]] for section in location["sections"] if "name" in section and section["name"] in self.tracker_world.poptracker_name_mapping and self.tracker_world.poptracker_name_mapping[section["name"]] in location_name_to_id and location_name_to_id[self.tracker_world.poptracker_name_mapping[section["name"]]] in self.server_locations ]
+                [ self.tracker_world.poptracker_name_mapping[f'{location["name"]}/{section["name"]}'] for section in location["sections"] if "name" in section and f'{location["name"]}/{section["name"]}' in self.tracker_world.poptracker_name_mapping and self.tracker_world.poptracker_name_mapping[f'{location["name"]}/{section["name"]}'] in self.server_locations ]
             for location in map_locs
             for map_loc in location["map_locations"]
-            if map_loc["map"] == m["name"] and any("name" in section and section["name"] in self.tracker_world.poptracker_name_mapping and self.tracker_world.poptracker_name_mapping[section["name"]] in location_name_to_id and location_name_to_id[self.tracker_world.poptracker_name_mapping[section["name"]]] in self.server_locations for section in location["sections"])
+            if map_loc["map"] == m["name"] and any("name" in section and f'{location["name"]}/{section["name"]}' in self.tracker_world.poptracker_name_mapping and self.tracker_world.poptracker_name_mapping[f'{location["name"]}/{section["name"]}'] in self.server_locations for section in location["sections"])
         }
         for maploc,seclist in tempCoords.items():
             if maploc in self.coords:
@@ -339,8 +340,8 @@ class TrackerGameContext(CommonContext):
             locationDict = DictProperty()
             color = ColorProperty("#DD00FF")
             def __init__(self, sections,**kwargs):
-                for location_name in sections:
-                    self.locationDict[location_name]="none"
+                for location_id in sections:
+                    self.locationDict[location_id]="none"
                 self.bind(locationDict=self.update_color)
                 super().__init__(**kwargs)
 
@@ -367,8 +368,8 @@ class TrackerGameContext(CommonContext):
                     #https://discord.com/channels/731205301247803413/1170094879142051912/1272327822630977727
                     temp_loc = ApLocation(sections,pos=(coord))
                     self.ids.location_canvas.add_widget(temp_loc)
-                    for location_name in sections:
-                        returnDict[location_name].append(temp_loc)
+                    for location_id in sections:
+                        returnDict[location_id].append(temp_loc)
                 return returnDict
 
         tracker_page = TabbedPanelItem(text="Tracker Page")
@@ -558,7 +559,7 @@ class TrackerGameContext(CommonContext):
                         return
 
                 if self.ui is not None and hasattr(connected_cls, "tracker_world"):
-                    self.tracker_world = UTMapTabData(**connected_cls.tracker_world)
+                    self.tracker_world = UTMapTabData(self.slot,self.team,**connected_cls.tracker_world)
                     
                     key = self.tracker_world.map_page_setting_key if self.tracker_world.map_page_setting_key else (str(self.slot)+"_"+str(self.team)+"_"+UT_MAP_TAB_KEY)
                     self.set_notify(key)
@@ -691,24 +692,20 @@ class TrackerGameContext(CommonContext):
             logger.error(tb)
 
     def TMain(self, args, seed=None):
-        try:
-            from test.general import gen_steps
-            # currently test isn't frozen so we don't have access to this for frozen builds
-        except ModuleNotFoundError:
-            from worlds.AutoWorld import World
-            gen_steps = filter(
-                lambda s: hasattr(World, s),
-                # filter out stages that World doesn't define so we can keep this list bleeding edge
-                (
-                    "generate_early",
-                    "create_regions",
-                    "create_items",
-                    "set_rules",
-                    "connect_entrances",
-                    "generate_basic",
-                    "pre_fill",
-                )
+        from worlds.AutoWorld import World
+        gen_steps = filter(
+            lambda s: hasattr(World, s),
+            # filter out stages that World doesn't define so we can keep this list bleeding edge
+            (
+                "generate_early",
+                "create_regions",
+                "create_items",
+                "set_rules",
+                "connect_entrances",
+                "generate_basic",
+                "pre_fill",
             )
+        )
 
         multiworld = MultiWorld(args.multi)
 
@@ -826,10 +823,8 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
         ctx.log_to_tab("All " + str(len(ctx.checked_locations)) + " accessible locations have been checked! Congrats!")
     if ctx.tracker_world is not None and ctx.ui is not None:
         #ctx.load_map()
-        location_id_to_name=AutoWorld.AutoWorldRegister.world_types[ctx.game].location_id_to_name
         for location in ctx.server_locations:
-            loc_name = location_id_to_name[location]
-            relevent_coords = ctx.coord_dict.get(loc_name,[])
+            relevent_coords = ctx.coord_dict.get(location,[])
             if location in ctx.checked_locations or location in ctx.ignored_locations:
                 status = "completed"
             elif location in ctx.locations_available:
@@ -837,7 +832,7 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
             else:
                 status = "out_of_logic"
             for coord in relevent_coords:
-                coord.update_status(loc_name,status)
+                coord.update_status(location,status)
     if ctx.quit_after_update:
         name = ctx.player_names[ctx.slot]
         logger.error("Game: " + ctx.game + " | Slot Name : " + name+" | In logic locations : " + str(len(locations)))

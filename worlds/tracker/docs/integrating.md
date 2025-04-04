@@ -87,11 +87,16 @@ from typing import ClassVar
         "map_page_setting_key" : <optional tag that informs which data storage key will be watched for auto tabbing>
         "map_page_index" : <optional function with signature Callable[Any,int] that will control the auto tabbing>
         "external_pack_key" : <optional string that is the name of the setting string that UT reads in order to find the external pop tracker pack>
-        "poptracker_name_mapping" : <optional Dict that maps the poptracker pack names to the names as they exist in the datapackage, having dupe names defined might cause problems :) >
+        "poptracker_name_mapping" : <optional Dict that maps the poptracker pack names to the location id as they exist in the datapackage >
     }
 ```
 
-for `external_pack_key` you can define the setting like this
+You can more easily define the setting key with slot and team values by defining a `__init__` function for your World class and including the following
+```py
+        "map_page_setting_key": f"{self.player}_CURRENT_MAP"
+```
+
+for `external_pack_key` you can define the setting like this, this should point to a zipped poptracker pack
 ```py
 from settings import FilePath
 class UTPackPath(FilePath):
