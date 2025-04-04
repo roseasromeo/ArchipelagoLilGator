@@ -226,7 +226,7 @@ class TrackerGameContext(CommonContext):
         if not self.ui or self.tracker_world is None:
             return
         if map_id is None:
-            key = str(self.slot)+"_"+str(self.team)+"_"+(self.tracker_world.map_page_setting_key if self.tracker_world.map_page_setting_key else UT_MAP_TAB_KEY)
+            key = self.tracker_world.map_page_setting_key if self.tracker_world.map_page_setting_key else (str(self.slot)+"_"+str(self.team)+"_"+UT_MAP_TAB_KEY)
             map_id = self.tracker_world.map_page_index(self.stored_data.get(key,""))
             if not self.auto_tab or map_id < 0 or map_id >= len(self.maps):
                 return #special case, don't load a new map
@@ -560,7 +560,7 @@ class TrackerGameContext(CommonContext):
                 if self.ui is not None and hasattr(connected_cls, "tracker_world"):
                     self.tracker_world = UTMapTabData(**connected_cls.tracker_world)
                     
-                    key = str(self.slot)+"_"+str(self.team)+"_"+(self.tracker_world.map_page_setting_key if self.tracker_world.map_page_setting_key else UT_MAP_TAB_KEY)
+                    key = self.tracker_world.map_page_setting_key if self.tracker_world.map_page_setting_key else (str(self.slot)+"_"+str(self.team)+"_"+UT_MAP_TAB_KEY)
                     self.set_notify(key)
                     self.load_pack()
                     self.ui.tabs.show_map = True
@@ -575,7 +575,7 @@ class TrackerGameContext(CommonContext):
                 updateTracker(self)
             elif cmd == 'SetReply':
                 if self.ui is not None and hasattr(AutoWorld.AutoWorldRegister.world_types[self.game], "tracker_world"):
-                    key = str(self.slot)+"_"+str(self.team)+"_"+(self.tracker_world.map_page_setting_key if self.tracker_world.map_page_setting_key else UT_MAP_TAB_KEY)
+                    key = self.tracker_world.map_page_setting_key if self.tracker_world.map_page_setting_key else (str(self.slot)+"_"+str(self.team)+"_"+UT_MAP_TAB_KEY)
                     if "key" in args and args["key"] == key:
                         self.load_map(None)
                         updateTracker(self)
