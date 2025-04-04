@@ -205,14 +205,14 @@ class TrackerGameContext(CommonContext):
     def load_pack(self):
         self.maps = []
         self.locs = []
-        if self.tracker_world.externalPackKey:
+        if self.tracker_world.external_pack_key:
             from zipfile import is_zipfile
-            packRef = self.multiworld.worlds[self.player_id].settings[self.tracker_world.externalPackKey]
+            packRef = self.multiworld.worlds[self.player_id].settings[self.tracker_world.external_pack_key]
             if is_zipfile(packRef):
                 for map_page in self.tracker_world.map_page_maps:
-                    self.maps += load_json_zip(packRef, f"/{self.tracker_world.map_page_folder}/{map_page}")
+                    self.maps += load_json_zip(packRef, f"{map_page}")
                 for loc_page in self.tracker_world.map_page_locations:
-                    self.locs += load_json_zip(packRef, f"/{self.tracker_world.map_page_folder}/{loc_page}")
+                    self.locs += load_json_zip(packRef, f"{loc_page}")
         else:
             PACK_NAME = self.multiworld.worlds[self.player_id].__class__.__module__
             for map_page in self.tracker_world.map_page_maps:
@@ -245,11 +245,11 @@ class TrackerGameContext(CommonContext):
             m = self.maps[map_id]
         location_name_to_id=AutoWorld.AutoWorldRegister.world_types[self.game].location_name_to_id
         # m = [m for m in self.maps if m["name"] == map_name]
-        if self.tracker_world.externalPackKey:
+        if self.tracker_world.external_pack_key:
             from zipfile import is_zipfile
-            packRef = self.multiworld.worlds[self.player_id].settings[self.tracker_world.externalPackKey]
+            packRef = self.multiworld.worlds[self.player_id].settings[self.tracker_world.external_pack_key]
             if is_zipfile(packRef):
-                self.ui.source = f"ap:zip:${packRef}/{self.tracker_world.map_page_folder}/{m['img']}"
+                self.ui.source = f"ap:zip:{packRef}/{m['img']}"
             else:
                 logger.error("Player poptracker doesn't seem to exist :< (must be a zip file)")
                 return
@@ -273,6 +273,18 @@ class TrackerGameContext(CommonContext):
             for map_loc in location["map_locations"]
             if map_loc["map"] == m["name"] and any("name" in section and section["name"] in location_name_to_id and location_name_to_id[section["name"]] in self.server_locations for section in location["sections"])
         }
+        tempCoords = { #compat coords
+            (map_loc["x"], map_loc["y"]) :
+                [ self.tracker_world.poptracker_name_mapping[section["name"]] for section in location["sections"] if "name" in section and section["name"] in self.tracker_world.poptracker_name_mapping and self.tracker_world.poptracker_name_mapping[section["name"]] in location_name_to_id and location_name_to_id[self.tracker_world.poptracker_name_mapping[section["name"]]] in self.server_locations ]
+            for location in map_locs
+            for map_loc in location["map_locations"]
+            if map_loc["map"] == m["name"] and any("name" in section and section["name"] in self.tracker_world.poptracker_name_mapping and self.tracker_world.poptracker_name_mapping[section["name"]] in location_name_to_id and location_name_to_id[self.tracker_world.poptracker_name_mapping[section["name"]]] in self.server_locations for section in location["sections"])
+        }
+        for maploc,seclist in tempCoords.items():
+            if maploc in self.coords:
+                self.coords[maploc] += seclist
+            else:
+                self.coords[maploc] = seclist
         self.coord_dict = self.map_page_coords_func(self.coords)
 
     def clear_page(self):
@@ -569,6 +581,7 @@ class TrackerGameContext(CommonContext):
                         updateTracker(self)
         except Exception as e:
             e.args= e.args+("This is likely a UT error, make sure you have the correct tracker.apworld version and no duplicates","Then try to reproduce with the debug launcher and post in the Discord channel")
+            self.disconnected_intentionally = True
             raise e
 
     def write_empty_yaml(self, game, player_name, tempdir):

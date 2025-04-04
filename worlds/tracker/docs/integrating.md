@@ -76,13 +76,26 @@ print(get_in_logic(ctx, items=[16777224, 16777227, 16777289], locations=[1677736
 Worlds can define a structure with the following fields in order to inform UT that a poptracker pack has been embeded
 
 ```py
-    tracker_world = {
-        "map_page_folder" : <Name of the folder that has all of poptracker files in it>
+from typing import ClassVar
+
+...
+
+    tracker_world: ClassVar = {
+        "map_page_folder" : <Name of the folder that has all of poptracker files in it, not used for external poptracker packs>
         "map_page_maps" : <Relative location(s) of the maps.json file(s), may be a list if more then one file exists>
         "map_page_locations" : <Relative location(s) of the locations.json file(s), may be a list if more then one file exists>
         "map_page_setting_key" : <optional tag that informs which data storage key will be watched for auto tabbing>
         "map_page_index" : <optional function with signature Callable[Any,int] that will control the auto tabbing>
+        "external_pack_key" : <optional string that is the name of the setting string that UT reads in order to find the external pop tracker pack>
+        "poptracker_name_mapping" : <optional Dict that maps the poptracker pack names to the names as they exist in the datapackage, having dupe names defined might cause problems :) >
     }
+```
+
+for `external_pack_key` you can define the setting like this
+```py
+from settings import FilePath
+class UTPackPath(FilePath):
+    pass
 ```
 
 The contents of maps.json and locations.json are the same as poptracker format with the exception that all logic is derived from UT's internal world, and the location names must match exactly with AP location names
