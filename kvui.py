@@ -87,10 +87,19 @@ else:
 remove_between_brackets = re.compile(r"\[.*?]")
 
 
+class ThemedApp(MDApp):
+    def set_colors(self):
+        text_colors = KivyJSONtoTextParser.TextColors()
+        self.theme_cls.theme_style = getattr(text_colors, "theme_style", "Dark")
+        self.theme_cls.primary_palette = getattr(text_colors, "primary_palette", "Green")
+        self.theme_cls.dynamic_scheme_name = getattr(text_colors, "dynamic_scheme_name", "TONAL_SPOT")
+        self.theme_cls.dynamic_scheme_contrast = getattr(text_colors, "dynamic_scheme_contrast", 0.0)
+
+
 class ImageIcon(MDButtonIcon, AsyncImage):
     def __init__(self, *args, **kwargs):
         super().__init__(args, kwargs)
-        self.image = AsyncImage(**kwargs)
+        self.image = ApAsyncImage(**kwargs)
         self.add_widget(self.image)
 
     def add_widget(self, widget, index=0, canvas=None):
@@ -105,7 +114,7 @@ class ImageButton(MDIconButton):
             if val != "None":
                 image_args[kwarg.replace("image_", "")] = val
         super().__init__()
-        self.image = AsyncImage(**image_args)
+        self.image = ApAsyncImage(**image_args)
 
         def set_center(button, center):
             self.image.center_x = self.center_x
@@ -119,15 +128,10 @@ class ImageButton(MDIconButton):
 
 
 class ScrollBox(MDScrollView):
-    layout: MDBoxLayout
+    layout: MDBoxLayout = ObjectProperty(None)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.layout = MDBoxLayout(size_hint_y=None)
-        self.layout.bind(minimum_height=self.layout.setter("height"))
-        self.add_widget(self.layout)
-        self.bar_width = dp(12)
-        self.scroll_type = ["bars"]
 
 
 # thanks kivymd
@@ -358,7 +362,7 @@ class SelectableLabel(RecycleDataViewBehavior, TooltipLabel):
             else:
                 # Not a fan of the following few lines, but they work.
                 temp = MarkupLabel(text=self.text).markup
-                text = "".join(part for part in temp if not part.startswith(("[color", "[/color]", "[ref=", "[/ref]")))
+                text = "".join(part for part in temp if not part.startswith("["))
                 cmdinput = MDApp.get_running_app().textinput
                 if not cmdinput.text:
                     input_text = get_input_text_from_response(text, MDApp.get_running_app().last_autofillable_command)
@@ -709,7 +713,7 @@ class ClientTabs(MDTabsPrimary):
         self.on_size(self, self.size)
 
 
-class GameManager(MDApp):
+class GameManager(ThemedApp):
     logging_pairs = [
         ("Client", "Archipelago"),
     ]
@@ -758,8 +762,7 @@ class GameManager(MDApp):
         Clock.schedule_once(on_start)
 
     def build(self) -> Layout:
-        self.theme_cls.theme_style = self.json_to_kivy_parser.theme_style
-        self.theme_cls.primary_palette = self.json_to_kivy_parser.primary_palette
+        self.set_colors()
         self.container = ContainerLayout()
 
         self.grid = MainLayout()
@@ -1043,7 +1046,7 @@ class HintLog(MDRecycleView):
                    "hint": {"receiving_player": -1, "location": -1, "finding_player": -1, "status": ""}},
         "striped": True,
     }
-    data: typing.List[typing.Any]
+    data: list[typing.Any]
     sort_key: str = ""
     reversed: bool = True
 

@@ -17,6 +17,8 @@
     # KivyMD theming parameters
     theme_style: "Dark" # Light/Dark
     primary_palette: "Green" # Many options
+    dynamic_scheme_name: "TONAL_SPOT"
+    dynamic_scheme_contrast: 0.0
 <MDLabel>:
     color: self.theme_cls.primaryColor
 <TooltipLabel>:
@@ -178,3 +180,16 @@
     height: dp(30)
     multiline: False
     write_tab: False
+<ScrollBox>:
+    layout: layout
+    bar_width: "12dp"
+    scroll_wheel_distance: 40
+    do_scroll_x: False
+    scroll_type: ['bars', 'content']
+
+    MDBoxLayout:
+        id: layout
+        orientation: "vertical"
+        spacing: 10
+        size_hint_y: None
+        height: self.minimum_height
