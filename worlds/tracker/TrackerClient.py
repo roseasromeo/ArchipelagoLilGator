@@ -68,22 +68,6 @@ class TrackerCommandProcessor(ClientCommandProcessor):
         for event in sorted(currentState.events):
             logger.info(event)
 
-    def _cmd_load_map(self,map_id: str="0"):
-        """Force a poptracker map id to be loaded"""
-        if self.ctx.tracker_world is not None:
-            self.ctx.load_map(map_id)
-            updateTracker(self.ctx)
-        else:
-            logger.info("No world with internal map loaded")
-
-    def _cmd_list_maps(self):
-        """List the available maps to load with /load_map"""
-        if self.ctx.tracker_world is not None:
-            for i,map in enumerate(self.ctx.maps):
-                logger.info("Map["+str(i)+"] = '"+map["name"]+"'")
-        else:
-            logger.info("No world with internal map loaded")
-
     @mark_raw
     def _cmd_manually_collect(self, item_name: str = ""):
         """Manually adds an item name to the CollectionState to test"""
@@ -159,6 +143,21 @@ class TrackerCommandProcessor(ClientCommandProcessor):
         self.ctx.auto_tab = not self.ctx.auto_tab
         logger.info(f"Auto tracking currently {'Enabled' if self.ctx.auto_tab else 'Disabled'}")
 
+def cmd_load_map(self: TrackerCommandProcessor,map_id: str="0"):
+    """Force a poptracker map id to be loaded"""
+    if self.ctx.tracker_world is not None:
+        self.ctx.load_map(map_id)
+        updateTracker(self.ctx)
+    else:
+        logger.info("No world with internal map loaded")
+
+def cmd_list_maps(self: TrackerCommandProcessor):
+    """List the available maps to load with /load_map"""
+    if self.ctx.tracker_world is not None:
+        for i,map in enumerate(self.ctx.maps):
+            logger.info("Map["+str(i)+"] = '"+map["name"]+"'")
+    else:
+        logger.info("No world with internal map loaded")
 
 class TrackerGameContext(CommonContext):
     game = ""
@@ -567,6 +566,11 @@ class TrackerGameContext(CommonContext):
                     self.ui.tabs.show_map = True
                 else:
                     self.tracker_world = None
+                if self.tracker_world:
+                    if "load_map" not in self.command_processor.commands:
+                        self.command_processor.commands["load_map"] = cmd_load_map
+                    if "list_maps" not in self.command_processor.commands:
+                        self.command_processor.commands["list_maps"] = cmd_list_maps
 
                 if hasattr(connected_cls, "location_id_to_alias"):
                     self.location_alias_map = connected_cls.location_id_to_alias
@@ -598,6 +602,11 @@ class TrackerGameContext(CommonContext):
             self.re_gen_passthrough = None
             if self.ui:
                 self.ui.tabs.show_map = False
+            if self.tracker_world:
+                if "load_map" in self.command_processor.commands:
+                    self.command_processor.commands["load_map"] = None
+                if "list_maps" in self.command_processor.commands:
+                    self.command_processor.commands["list_maps"] = None
             self.tracker_world = None
             self.multiworld = None
             # TODO: persist these per url+slot(+seed)?
