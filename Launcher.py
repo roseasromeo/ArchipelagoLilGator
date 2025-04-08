@@ -352,6 +352,9 @@ def run_gui(path: str, args: Any) -> None:
             self._refresh_components(caller.type)
 
         def build(self):
+            from kvui import MDButton, MDButtonIcon, MDButtonText
+            from kivymd.uix.navigationdrawer import MDNavigationDrawerDivider
+
             self.top_screen = Builder.load_file(Utils.local_path("data/launcher.kv"))
             self.grid = self.top_screen.ids.grid
             self.navigation = self.top_screen.ids.navigation
