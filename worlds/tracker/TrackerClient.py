@@ -37,7 +37,7 @@ if not sys.stdout:  # to make sure sm varia's "i'm working" dots don't break UT 
 
 logger = logging.getLogger("Client")
 
-UT_VERSION = "v0.2.2"
+UT_VERSION = "v0.2.2MD"
 DEBUG = False
 ITEMS_HANDLING = 0b111
 REGEN_WORLDS = {name for name, world in AutoWorld.AutoWorldRegister.world_types.items() if getattr(world, "ut_can_gen_without_yaml", False)}
@@ -223,7 +223,6 @@ class TrackerGameContext(CommonContext):
             for loc_page in self.tracker_world.map_page_locations:
                 self.locs += load_json(PACK_NAME, f"/{self.tracker_world.map_page_folder}/{loc_page}")
         self.load_map(None)
-
     def load_map(self,map_id:Union[int, str, None]):
         """REMEMBER TO RUN UPDATE_TRACKER!"""
         if not self.ui or self.tracker_world is None:
@@ -313,8 +312,7 @@ class TrackerGameContext(CommonContext):
 
     def build_gui(self, manager: "GameManager"):
         from kivy.uix.boxlayout import BoxLayout
-        from kivy.uix.tabbedpanel import TabbedPanelItem
-        from kivy.uix.recycleview import RecycleView
+        from kvui import MDTabsItem, MDTabsItemText, MDRecycleView
         from kivy.uix.widget import Widget
         from kivy.properties import StringProperty, NumericProperty, BooleanProperty
         from kvui import ApAsyncImage #one of these needs to be loaded
@@ -322,8 +320,8 @@ class TrackerGameContext(CommonContext):
 
         class TrackerLayout(BoxLayout):
             pass
-
-        class TrackerView(RecycleView):
+    
+        class TrackerView(MDRecycleView):
             def __init__(self, **kwargs):
                 super().__init__(**kwargs)
                 self.data = []
@@ -374,8 +372,8 @@ class TrackerGameContext(CommonContext):
                         returnDict[location_id].append(temp_loc)
                 return returnDict
 
-        tracker_page = TabbedPanelItem(text="Tracker Page")
-        map_page = TabbedPanelItem(text="Map Page")
+        tracker_page = MDTabsItem(MDTabsItemText(text="Tracker Page"))
+        map_page = MDTabsItem(MDTabsItemText(text="Map Page"))
 
         try:
             tracker = TrackerLayout(orientation="horizontal")
@@ -396,19 +394,25 @@ class TrackerGameContext(CommonContext):
             tb = traceback.format_exc()
             print(tb)
         manager.tabs.add_widget(tracker_page)
+        manager.tabs.carousel.add_widget(tracker_page.content)
+
         @staticmethod
         def set_map_tab(self,value,*args,map_page=map_page):
             if value:
                 self.add_widget(map_page)
-                self.tab_width = self.tab_width * (len(self.tab_list)-1)/len(self.tab_list)
-                #for some forsaken reason, the tab panel doesn't auto adjust tab width by itself
-                #it is happy to let the header have a scroll bar until the window forces it to resize
+                self.carousel.add_widget(map_page.content)
+                self._set_slides_attributes()
+                self.on_size(self, self.size)
             else:
-                self.remove_widget(map_page)
-                self.tab_width = self.tab_width * (len(self.tab_list)+1)/len(self.tab_list)
+                self.remove_tab(map_page)
 
-        manager.tabs.apply_property(show_map=BooleanProperty(False))
+        # hopefully there's a better way in the future but I had to add and then remove the tab so it
+        # wouldn't croak trying to set width with no parent carousel
+        manager.tabs.add_widget(map_page)
+        manager.tabs.carousel.add_widget(map_page.content)
+        manager.tabs.apply_property(show_map=BooleanProperty(True))
         manager.tabs.fbind("show_map",set_map_tab)
+        manager.tabs.show_map = False
 
     def make_gui(self):
         ui = super().make_gui()  # before the kivy imports so kvui gets loaded first
@@ -471,9 +475,6 @@ class TrackerGameContext(CommonContext):
                 HintLog.on_kv_post = kv_post
 
                 container = super().build()
-                self.tabs.do_default_tab = True
-                self.tabs.current_tab.height = 40
-                self.tabs.tab_height = 40
                 self.ctx.build_gui(self)
 
                 return container

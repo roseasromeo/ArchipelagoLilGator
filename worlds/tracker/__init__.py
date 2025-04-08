@@ -1,4 +1,3 @@
-
 from worlds.LauncherComponents import Component, components, Type, launch_subprocess, icon_paths
 from settings import Group, Bool, UserFolderPath, _world_settings_name_cache
 from typing import Dict, Optional, List, Any, Union, ClassVar, NamedTuple, Callable

@@ -78,8 +78,6 @@ Worlds can define a structure with the following fields in order to inform UT th
 ```py
 from typing import ClassVar
 
-...
-
     tracker_world: ClassVar = {
         "map_page_folder" : <Name of the folder that has all of poptracker files in it, not used for external poptracker packs>
         "map_page_maps" : <Relative location(s) of the maps.json file(s), may be a list if more then one file exists>
