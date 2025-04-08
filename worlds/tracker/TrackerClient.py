@@ -208,11 +208,14 @@ class TrackerGameContext(CommonContext):
         if self.tracker_world.external_pack_key:
             from zipfile import is_zipfile
             packRef = self.multiworld.worlds[self.player_id].settings[self.tracker_world.external_pack_key]
-            if is_zipfile(packRef):
+            if packRef and is_zipfile(packRef):
                 for map_page in self.tracker_world.map_page_maps:
                     self.maps += load_json_zip(packRef, f"{map_page}")
                 for loc_page in self.tracker_world.map_page_locations:
                     self.locs += load_json_zip(packRef, f"{loc_page}")
+            else:
+                self.tracker_world = None
+                return
         else:
             PACK_NAME = self.multiworld.worlds[self.player_id].__class__.__module__
             for map_page in self.tracker_world.map_page_maps:
@@ -248,7 +251,7 @@ class TrackerGameContext(CommonContext):
         if self.tracker_world.external_pack_key:
             from zipfile import is_zipfile
             packRef = self.multiworld.worlds[self.player_id].settings[self.tracker_world.external_pack_key]
-            if is_zipfile(packRef):
+            if packRef and is_zipfile(packRef):
                 self.ui.source = f"ap:zip:{packRef}/{m['img']}"
             else:
                 logger.error("Player poptracker doesn't seem to exist :< (must be a zip file)")

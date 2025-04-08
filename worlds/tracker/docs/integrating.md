@@ -100,6 +100,7 @@ for `external_pack_key` you can define the setting like this, this should point 
 ```py
 from settings import FilePath
 class UTPackPath(FilePath):
+    #required = False #You can uncomment this to allow users to not have the poptracker map, if the key is "" then the map tab won't be rendered
     pass
 ```
 
