@@ -111,6 +111,25 @@ UT supports a number of world flags that determine how UT will handle the world,
  * `disable_ut` : This causes UT to ignore the world, to be used only if the world is known to have issues when loaded in UT and fixing it would be more trouble then it's worth (Merged game/existing compatent poptracker etc)
  * `ut_can_gen_without_yaml` : Tells UT that the game will do a full regen
 
+# Command Line Interface
+
+UT provides two args that allow it to run as a "single shot" command line utility
+
+  * `--list` which simply lists all currently in logic locations (as they would appear on the tab in the UI)
+  * `--count` which provides an easier to parse overview of the current in logic state
+
+To  use these commands, do the following
+
+  1) Invoke the Launcher (if not on source, use the debug launcher to get a command line)
+  2) Tell the launcher to open Universal Tracker
+  3) Pass in the `--nogui` and whichever (or both) CLI args you want
+  4) Input the URL
+
+For example
+```sh
+python .\Launcher.py "Universal Tracker" -- --nogui --list Player1:None@localhost
+```
+
 # Adding In-Logic Callbacks
 
 To be filled out later

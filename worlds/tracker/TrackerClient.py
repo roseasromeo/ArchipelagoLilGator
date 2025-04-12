@@ -161,7 +161,6 @@ def cmd_list_maps(self: TrackerCommandProcessor):
 
 class TrackerGameContext(CommonContext):
     game = ""
-    quit_after_update = False
     tags = CommonContext.tags | {"Tracker"}
     command_processor = TrackerCommandProcessor
     tracker_page = None
@@ -183,7 +182,7 @@ class TrackerGameContext(CommonContext):
     ignored_locations: Set[int]
     location_alias_map: Dict[int,str] = {}
 
-    def __init__(self, server_address, password, no_connection: bool = False,quit_after_update: bool = False):
+    def __init__(self, server_address, password, no_connection: bool = False,print_list: bool = False, print_count: bool = False):
         if no_connection:
             from worlds import network_data_package
             self.item_names = self.NameLookupDict(self, "item")
@@ -200,7 +199,9 @@ class TrackerGameContext(CommonContext):
         self.player_id = None
         self.manual_items = []
         self.ignored_locations = set()
-        self.quit_after_update = quit_after_update
+        self.quit_after_update = print_list or print_count
+        self.print_list = print_list
+        self.print_count = print_count
 
     def load_pack(self):
         self.maps = []
@@ -786,6 +787,7 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
     ctx.clear_page()
     regions = []
     locations = []
+    readable_locations = []
     for temp_loc in ctx.multiworld.get_reachable_locations(state, ctx.player_id):
         if temp_loc.address == None or isinstance(temp_loc.address, List):
             continue
@@ -806,12 +808,15 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
                     temp_name += f" ({ctx.location_alias_map[temp_loc.address]})"
                 if ctx.output_format == "Both":
                     ctx.log_to_tab(region + " | " + temp_name, True)
+                    readable_locations.append(region + " | " + temp_name)
                 elif ctx.output_format == "Location":
                     ctx.log_to_tab(temp_name, True)
+                    readable_locations.append(temp_name)
                 if region not in regions:
                     regions.append(region)
                     if ctx.output_format == "Region":
                         ctx.log_to_tab(region, True)
+                        readable_locations.append(region)
                 callback_list.append(temp_loc.name)
                 locations.append(temp_loc.address)
         except:
@@ -848,7 +853,11 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
                 coord.update_status(location,status)
     if ctx.quit_after_update:
         name = ctx.player_names[ctx.slot]
-        logger.error("Game: " + ctx.game + " | Slot Name : " + name+" | In logic locations : " + str(len(locations)))
+        if ctx.print_count:
+            logger.error("Game: " + ctx.game + " | Slot Name : " + name+" | In logic locations : " + str(len(locations)))
+        if ctx.print_list:
+            for i in readable_locations:
+                logger.error(i)
         ctx.exit_event.set()
 
     return CurrentTrackerState(all_items, prog_items, events,state)
@@ -868,7 +877,7 @@ async def game_watcher(ctx: TrackerGameContext) -> None:
             print(tb)
 
 async def main(args):
-    ctx = TrackerGameContext(args.connect, args.password,quit_after_update=args.count)
+    ctx = TrackerGameContext(args.connect, args.password,print_count=args.count,print_list=args.list)
     ctx.auth = args.name
     ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
     ctx.run_generator()
@@ -886,17 +895,24 @@ def launch(*args):
     parser.add_argument('--name', default=None, help="Slot Name to connect as.")
     if sys.stdout:  # If terminal output exists, offer gui-less mode
         parser.add_argument('--count', default=False, action='store_true', help="just return a count of in logic checks")
+        parser.add_argument('--list', default=False, action='store_true', help="just return a list of in logic checks")
     parser.add_argument("url", nargs="?", help="Archipelago connection url")
     args = parser.parse_args(args)
 
     if args.url:
-        url = urllib.parse.urlparse(args.url)
+        address = args.url
+        address = f"ws://{address}" if "://" not in address \
+        else address.replace("archipelago://", "ws://")
+        url = urllib.parse.urlparse(address)
         args.connect = url.netloc
         if url.username:
             args.name = urllib.parse.unquote(url.username)
         if url.password:
             args.password = urllib.parse.unquote(url.password)
-    if args.count:
+    if args.nogui and (args.count or args.list):
+        if not args.name or not args.connect:
+            logger.error("You need a valid URL when running in CLI mode")
+            return
         from logging import ERROR
         logger.setLevel(ERROR)
 
