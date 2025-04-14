@@ -143,6 +143,12 @@ class TrackerCommandProcessor(ClientCommandProcessor):
         self.ctx.auto_tab = not self.ctx.auto_tab
         logger.info(f"Auto tracking currently {'Enabled' if self.ctx.auto_tab else 'Disabled'}")
 
+    @mark_raw
+    def _cmd_get_logical_path(self,location_name:str = ""):
+        if not self.ctx.game:
+            logger.info("Not yet loaded into a game")
+        get_path(self.ctx,location_name)
+
 def cmd_load_map(self: TrackerCommandProcessor,map_id: str="0"):
     """Force a poptracker map id to be loaded"""
     if self.ctx.tracker_world is not None:
@@ -538,6 +544,7 @@ class TrackerGameContext(CommonContext):
                 else:
                     if self.launch_multiworld is None:
                         self.log_to_tab("Internal world was not able to be generated, check your yamls and relaunch", False)
+                        self.log_to_tab("If this issue persists, reproduce with the debug launcher and post the error message to the discord channel",False)
                         return
 
                     if slot_name in self.launch_multiworld.world_name_lookup:
@@ -563,9 +570,6 @@ class TrackerGameContext(CommonContext):
 
                 if self.ui is not None and hasattr(connected_cls, "tracker_world"):
                     self.tracker_world = UTMapTabData(self.slot,self.team,**connected_cls.tracker_world)
-                    
-                    key = self.tracker_world.map_page_setting_key if self.tracker_world.map_page_setting_key else (str(self.slot)+"_"+str(self.team)+"_"+UT_MAP_TAB_KEY)
-                    self.set_notify(key)
                     self.load_pack()
                     self.ui.tabs.show_map = True
                 else:
@@ -578,9 +582,10 @@ class TrackerGameContext(CommonContext):
 
                 if hasattr(connected_cls, "location_id_to_alias"):
                     self.location_alias_map = connected_cls.location_id_to_alias
-                updateTracker(self)
-                self.watcher_task = asyncio.create_task(game_watcher(self), name="GameWatcher")
-            elif cmd == 'RoomUpdate':
+                if not self.quit_after_update:
+                    updateTracker(self)
+                self.watcher_task = asyncio.create_task(game_watcher(self), name="GameWatcher") #This shouldn't be needed, but technically 
+            elif cmd == 'RoomUpdate' or cmd == 'ReceivedItems':
                 updateTracker(self)
             elif cmd == 'SetReply':
                 if self.ui is not None and hasattr(AutoWorld.AutoWorldRegister.world_types[self.game], "tracker_world"):
@@ -755,6 +760,55 @@ def load_json_zip(pack, path):
         with parentFile.open(path) as childFile:
             return json.loads(childFile.read().decode('utf-8-sig'))
 
+def get_path(ctx: TrackerGameContext, dest_name: str):
+    if ctx.player_id is None or ctx.multiworld is None:
+        logger.error("Player YAML not installed or Generator failed")
+        ctx.set_page(f"Check Player YAMLs for error; Tracker {UT_VERSION} for AP version {__version__}")
+        return
+    dest_id = ctx.multiworld.worlds[ctx.player_id].location_name_to_id[dest_name]
+    if dest_id not in ctx.server_locations:
+        logger.error("Location not found")
+        return
+
+    state = CollectionState(ctx.multiworld)
+    state.sweep_for_advancements(
+        locations=(location for location in ctx.multiworld.get_locations(ctx.player_id) if (not location.address)))
+
+    item_id_to_name = ctx.multiworld.worlds[ctx.player_id].item_id_to_name
+    for item_name in [item_id_to_name[item[0]] for item in ctx.items_received] + ctx.manual_items:
+        try:
+            world_item = ctx.multiworld.create_item(item_name, ctx.player_id)
+            state.collect(world_item, True)
+        except:
+            ctx.log_to_tab("Item id " + str(item_name) + " not able to be created", False)
+    state.sweep_for_advancements(
+        locations=(location for location in ctx.multiworld.get_locations(ctx.player_id) if (not location.address)))
+    if state.can_reach_location(dest_name,ctx.player_id):
+        from BaseClasses import Region
+        from typing import Tuple,Iterator
+        from itertools import zip_longest
+
+        def flist_to_iter(path_value) -> Iterator[str]:
+            while path_value:
+                region_or_entrance, path_value = path_value
+                yield region_or_entrance
+        def get_path(state: CollectionState, region: Region) -> List[Union[Tuple[str, str], Tuple[str, None]]]:
+            reversed_path_as_flist = state.path.get(region, (str(region), None))
+            string_path_flat = reversed(list(map(str, flist_to_iter(reversed_path_as_flist))))
+            # Now we combine the flat string list into (region, exit) pairs
+            pathsiter = iter(string_path_flat)
+            pathpairs = zip_longest(pathsiter, pathsiter)
+            return list(pathpairs)
+
+        location = ctx.multiworld.get_location(dest_name,ctx.player_id)
+        paths = get_path(state=state,region=location.parent_region)
+        for k,v in paths.items():
+            if v: logger.info(v)
+
+    else:
+        logger.info("Location not in logic")
+
+
 def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
     if ctx.player_id is None or ctx.multiworld is None:
         logger.error("Player YAML not installed or Generator failed")
@@ -763,7 +817,7 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
 
     state = CollectionState(ctx.multiworld)
     state.sweep_for_advancements(
-        locations=(location for location in ctx.multiworld.get_locations() if (not location.address)))
+        locations=(location for location in ctx.multiworld.get_locations(ctx.player_id) if (not location.address)))
     prog_items = Counter()
     all_items = Counter()
 
@@ -781,7 +835,7 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
         except:
             ctx.log_to_tab("Item id " + str(item_name) + " not able to be created", False)
     state.sweep_for_advancements(
-        locations=(location for location in ctx.multiworld.get_locations() if (not location.address)))
+        locations=(location for location in ctx.multiworld.get_locations(ctx.player_id) if (not location.address)))
 
     ctx.clear_page()
     regions = []
