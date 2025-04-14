@@ -17,7 +17,7 @@ from BaseClasses import CollectionState, MultiWorld, LocationProgressType
 from worlds.generic.Rules import exclusion_rules, locality_rules
 from Options import StartInventoryPool
 from settings import get_settings
-from Utils import __version__, output_path
+from Utils import __version__, output_path,open_filename
 from worlds import AutoWorld
 from worlds.tracker import TrackerWorld, UTMapTabData, CurrentTrackerState
 from collections import Counter,defaultdict
@@ -209,7 +209,11 @@ class TrackerGameContext(CommonContext):
         if self.tracker_world.external_pack_key:
             from zipfile import is_zipfile
             packRef = self.multiworld.worlds[self.player_id].settings[self.tracker_world.external_pack_key]
+            if packRef == "":
+                packRef = open_filename("Select Poptracker pack",filetypes=[("Poptracker Pack",[".zip"])])
             if packRef and is_zipfile(packRef):
+                self.multiworld.worlds[self.player_id].settings.update({self.tracker_world.external_pack_key : packRef})
+                self.multiworld.worlds[self.player_id].settings._changed = True
                 for map_page in self.tracker_world.map_page_maps:
                     self.maps += load_json_zip(packRef, f"{map_page}")
                 for loc_page in self.tracker_world.map_page_locations:
@@ -568,7 +572,10 @@ class TrackerGameContext(CommonContext):
                     key = self.tracker_world.map_page_setting_key if self.tracker_world.map_page_setting_key else (str(self.slot)+"_"+str(self.team)+"_"+UT_MAP_TAB_KEY)
                     self.set_notify(key)
                     self.load_pack()
-                    self.ui.tabs.show_map = True
+                    if self.tracker_world: #don't show the map if loading failed
+                        self.ui.tabs.show_map = True
+                        key = self.tracker_world.map_page_setting_key if self.tracker_world.map_page_setting_key else (str(self.slot)+"_"+str(self.team)+"_"+UT_MAP_TAB_KEY)
+                        self.set_notify(key)
                 else:
                     self.tracker_world = None
                 if self.tracker_world:
