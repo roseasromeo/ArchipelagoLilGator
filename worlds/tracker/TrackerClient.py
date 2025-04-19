@@ -563,8 +563,17 @@ class TrackerGameContext(CommonContext):
                         else:
                             self.re_gen_passthrough = {self.game: slot_data}
                             self.run_generator(args["slot_data"], tempdir)
+                            if self.multiworld is None:
+                                self.log_to_tab("Internal world was not able to be generated, check your yamls and relaunch", False)
+                                self.log_to_tab("If this issue persists, reproduce with the debug launcher and post the error message to the discord channel", False)
+                                return
                             world = self.multiworld.worlds[self.player_id]
                         self.regen_slots(world, slot_data, tempdir)
+                        if self.multiworld is None:
+                            self.log_to_tab("Internal world was not able to be generated, check your yamls and relaunch", False)
+                            self.log_to_tab("If this issue persists, reproduce with the debug launcher and post the error message to the discord channel", False)
+                            return
+
                 else:
                     if self.launch_multiworld is None:
                         self.log_to_tab("Internal world was not able to be generated, check your yamls and relaunch", False)
@@ -906,7 +915,7 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
 
     ctx.locations_available = locations
 
-    if ctx.tracker_world.map_page_glitches_item_name:
+    if ctx.tracker_world and ctx.tracker_world.map_page_glitches_item_name:
         try:
             world_item = ctx.multiworld.create_item(ctx.tracker_world.map_page_glitches_item_name, ctx.player_id)
             state.collect(world_item, True)
