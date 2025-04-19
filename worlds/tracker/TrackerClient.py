@@ -376,12 +376,22 @@ class TrackerGameContext(CommonContext):
 
             @staticmethod
             def update_color(self, locationDict):
-                if any(status == "in_logic" for status in locationDict.values()) and any(status == "out_of_logic" for status in locationDict.values()):
-                    self.color = "#FF9F20"
-                elif any(status == "in_logic" for status in locationDict.values()):
-                    self.color = "#20FF20"
-                elif any(status == "out_of_logic" for status in locationDict.values()):
-                    self.color = "#CF1010"
+                glitches = any(status == "glitches" for status in locationDict.values())
+                in_logic = any(status == "in_logic" for status in locationDict.values())
+                out_of_logic = any(status == "out_of_logic" for status in locationDict.values())
+
+                if out_of_logic and in_logic: # also glitches but also not glitches
+                    self.color = "#ff9f20"
+                elif out_of_logic and glitches:
+                    self.color = "#ef5500"
+                elif in_logic and glitches:
+                    self.color = "#afff20"
+                elif in_logic:
+                    self.color = "#20ff20"
+                elif out_of_logic:
+                    self.color = "#cf1010"
+                elif glitches:
+                    self.color = "#ffff20"
                 else:
                     self.color = "#3F3F3F"
 
@@ -853,6 +863,7 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
     regions = []
     locations = []
     readable_locations = []
+    glitches_locations = []
     for temp_loc in ctx.multiworld.get_reachable_locations(state, ctx.player_id):
         if temp_loc.address is None or isinstance(temp_loc.address, list):
             continue
@@ -889,9 +900,35 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
             pass
     events = [location.item.name for location in state.advancements if location.player == ctx.player_id]
 
+    ctx.locations_available = locations
+
+    if ctx.tracker_world.map_page_glitches_item_name:
+        try:
+            world_item = ctx.multiworld.create_item(ctx.tracker_world.map_page_glitches_item_name, ctx.player_id)
+            state.collect(world_item, True)
+        except Exception:
+            ctx.log_to_tab("Item id " + str(ctx.tracker_world.map_page_glitches_item_name) + " not able to be created", False)
+        else:
+            state.sweep_for_advancements(
+                locations=[location for location in ctx.multiworld.get_locations(ctx.player_id) if (not location.address)])
+            for temp_loc in ctx.multiworld.get_reachable_locations(state, ctx.player_id):
+                if temp_loc.address is None or isinstance(temp_loc.address, list):
+                    continue
+                elif ctx.hide_excluded and temp_loc.progress_type == LocationProgressType.EXCLUDED:
+                    continue
+                elif temp_loc.address in ctx.ignored_locations:
+                    continue
+                elif temp_loc.address in locations:
+                    continue # already in logic
+                try:
+                    if (temp_loc.address in ctx.missing_locations):
+                        glitches_locations.append(temp_loc.address)
+                except Exception:
+                    ctx.log_to_tab("ERROR: location " + temp_loc.name + " broke something, report this to discord")
+                    pass
+
     if ctx.tracker_page:
         ctx.tracker_page.refresh_from_data()
-    ctx.locations_available = locations
     if ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}" in ctx.stored_data:
         ctx.ui.update_hints()
     if ctx.update_callback is not None:
@@ -912,6 +949,8 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
                 status = "completed"
             elif location in ctx.locations_available:
                 status = "in_logic"
+            elif location in glitches_locations:
+                status = "glitches"
             else:
                 status = "out_of_logic"
             for coord in relevent_coords:
