@@ -602,8 +602,10 @@ class TrackerGameContext(CommonContext):
                     self.location_alias_map = connected_cls.location_id_to_alias
                 if not self.quit_after_update:
                     updateTracker(self)
-                self.watcher_task = asyncio.create_task(game_watcher(self), name="GameWatcher")  # This shouldn't be needed, but technically
-            elif cmd == 'RoomUpdate' or cmd == 'ReceivedItems':
+                else:
+                    asyncio.create_task(wait_for_items(self),name="UT Delay function") #if we don't get new items, delay for a bit first
+                self.watcher_task = asyncio.create_task(game_watcher(self), name="GameWatcher") #This shouldn't be needed, but technically 
+            elif cmd == 'RoomUpdate':
                 updateTracker(self)
             elif cmd == 'SetReply':
                 if self.ui is not None and hasattr(AutoWorld.AutoWorldRegister.world_types[self.game], "tracker_world"):
@@ -940,6 +942,12 @@ async def game_watcher(ctx: TrackerGameContext) -> None:
             tb = traceback.format_exc()
             print(tb)
 
+async def wait_for_items(ctx: TrackerGameContext)-> None:
+    try:
+        await asyncio.wait_for(ctx.watcher_event.wait(), 0.125)
+    except asyncio.TimeoutError:
+        updateTracker(ctx) #if it timed out, we need to manually trigger this
+        #if it didn't, then game_watcher will handle it
 
 async def main(args):
     ctx = TrackerGameContext(args.connect, args.password, print_count=args.count, print_list=args.list)
