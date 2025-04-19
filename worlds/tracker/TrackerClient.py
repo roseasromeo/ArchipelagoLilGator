@@ -136,12 +136,12 @@ class TrackerCommandProcessor(ClientCommandProcessor):
         self.ctx.auto_tab = not self.ctx.auto_tab
         logger.info(f"Auto tracking currently {'Enabled' if self.ctx.auto_tab else 'Disabled'}")
 
-    @mark_raw
-    def _cmd_get_logical_path(self, location_name: str = ""):
-        """Finds a logical expected path to a particular location by name"""
-        if not self.ctx.game:
-            logger.info("Not yet loaded into a game")
-        get_logical_path(self.ctx, location_name)
+@mark_raw
+def cmd_get_logical_path(self, location_name: str = ""):
+    """Finds a logical expected path to a particular location by name"""
+    if not self.ctx.game:
+        logger.info("Not yet loaded into a game")
+    get_logical_path(self.ctx, location_name)
 
 
 def cmd_load_map(self: TrackerCommandProcessor, map_id: str = "0"):
@@ -607,6 +607,8 @@ class TrackerGameContext(CommonContext):
                         self.command_processor.commands["load_map"] = cmd_load_map
                     if "list_maps" not in self.command_processor.commands:
                         self.command_processor.commands["list_maps"] = cmd_list_maps
+                if self.stored_data and "_read_race_mode" in self.stored_data and not (self.stored_data["_read_race_mode"]): 
+                    self.command_processor.commands["get_logical_path"] = cmd_get_logical_path
 
                 if hasattr(connected_cls, "location_id_to_alias"):
                     self.location_alias_map = connected_cls.location_id_to_alias
@@ -647,6 +649,8 @@ class TrackerGameContext(CommonContext):
                     self.command_processor.commands["load_map"] = None
                 if "list_maps" in self.command_processor.commands:
                     self.command_processor.commands["list_maps"] = None
+            if "get_logical_path" in self.command_processor.commands:
+                self.command_processor.commands["get_logical_path"] = None
             self.tracker_world = None
             self.multiworld = None
             # TODO: persist these per url+slot(+seed)?
