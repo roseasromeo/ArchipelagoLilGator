@@ -338,13 +338,17 @@ class TrackerGameContext(CommonContext):
 
     def build_gui(self, manager: "GameManager"):
         from kivy.uix.boxlayout import BoxLayout
-        from kvui import MDTabsItem, MDTabsItemText, MDRecycleView
+        from kvui import MDTabsItem, MDTabsItemText, MDRecycleView, HoverBehavior
+        from kivymd.uix.tooltip import MDTooltip,MDTooltipPlain
         from kivy.uix.widget import Widget
         from kivy.properties import StringProperty, NumericProperty, BooleanProperty
         from kvui import ApAsyncImage
         from .TrackerKivy import SomethingNeatJustToMakePythonHappy
 
         class TrackerLayout(BoxLayout):
+            pass
+
+        class TrackerTooltip(MDTooltipPlain):
             pass
     
         class TrackerView(MDRecycleView):
@@ -361,21 +365,66 @@ class TrackerGameContext(CommonContext):
                 if sort:
                     self.data.sort(key=lambda e: e["text"])
 
-        class ApLocation(Widget):
+        class ApLocation(HoverBehavior, Widget, MDTooltip):
             from kivy.properties import DictProperty, ColorProperty
             locationDict = DictProperty()
             color = ColorProperty("#DD00FF")
 
-            def __init__(self, sections, **kwargs):
+            def __init__(self, sections, parent, **kwargs):
                 for location_id in sections:
                     self.locationDict[location_id] = "none"
+                    self.tracker_page = parent
                 self.bind(locationDict=self.update_color)
                 super().__init__(**kwargs)
+                self._tooltip = TrackerTooltip(text="Test")
+                self._tooltip.markup = True
+            
+            def on_enter(self):
+                self._tooltip.text = self.get_text()
+                self.display_tooltip()
+
+            def on_leave(self):
+                self.animation_tooltip_dismiss()
+            
+            def transform_to_pop_coords(self,x,y):
+                x2 = (x)
+                y2 = (self.tracker_page.height - y)
+                x3 = x2 - (self.tracker_page.x + (self.tracker_page.width - self.tracker_page.norm_image_size[0])/2)
+                y3 = y2 + (self.tracker_page.y + (self.tracker_page.height - self.tracker_page.norm_image_size[1])/2)
+                x4 = x3 / ((self.tracker_page.norm_image_size[0] / self.tracker_page.texture_size[0]) if self.tracker_page.texture_size[0] > 0 else 1)
+                y4 = y3 / ((self.tracker_page.norm_image_size[1] / self.tracker_page.texture_size[1]) if self.tracker_page.texture_size[0] > 0 else 1)
+                x5 = x4 + self.width/2
+                y5 = y4 + self.width/2
+                return (x5,y5)
+
+            def to_window(self, x, y):
+                if self.border_point:
+                    return self.border_point
+                else:
+                    return self.tracker_page.to_window(x,y)
+            
+            def to_widget(self, x, y):
+                return self.transform_to_pop_coords(*self.tracker_page.to_widget(x,y))
 
             def update_status(self, location, status):
                 if location in self.locationDict:
                     if self.locationDict[location] != status:
                         self.locationDict[location] = status
+            
+            def get_text(self):
+                ctx = manager.get_running_app().ctx
+                location_id_to_name = AutoWorld.AutoWorldRegister.world_types[ctx.game].location_id_to_name
+                sReturn = []
+                for loc,status in self.locationDict.items():
+                    color = "000000"
+                    if status == "in_logic":
+                        color = "20ff20"
+                    elif status == "out_of_logic":
+                        color = "cf1010"
+                    elif status == "glitched":
+                        color = "ffff20"
+                    sReturn.append(f"[color={color}]{location_id_to_name[loc]} : {status}[/color]") 
+                return "\n".join(sReturn)
 
             @staticmethod
             def update_color(self, locationDict):
@@ -404,7 +453,7 @@ class TrackerGameContext(CommonContext):
                 returnDict = defaultdict(list)
                 for coord, sections in coords.items():
                     # https://discord.com/channels/731205301247803413/1170094879142051912/1272327822630977727
-                    temp_loc = ApLocation(sections, pos=(coord))
+                    temp_loc = ApLocation(sections, self.ids.tracker_map, pos=(coord))
                     self.ids.location_canvas.add_widget(temp_loc)
                     for location_id in sections:
                         returnDict[location_id].append(temp_loc)
@@ -632,7 +681,6 @@ class TrackerGameContext(CommonContext):
             elif cmd == 'RoomUpdate':
                 updateTracker(self)
             elif cmd == 'SetReply':
-                print(self.stored_data)
                 if self.ui is not None and hasattr(AutoWorld.AutoWorldRegister.world_types[self.game], "tracker_world"):
                     key = self.tracker_world.map_page_setting_key or f"{self.slot}_{self.team}_{UT_MAP_TAB_KEY}"
                     if "key" in args and args["key"] == key:
