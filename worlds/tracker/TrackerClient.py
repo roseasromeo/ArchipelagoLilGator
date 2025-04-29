@@ -390,12 +390,15 @@ class TrackerGameContext(CommonContext):
                 x2 = (x)
                 y2 = (self.tracker_page.height - y)
                 x3 = x2 - (self.tracker_page.x + (self.tracker_page.width - self.tracker_page.norm_image_size[0])/2)
-                y3 = y2 + (self.tracker_page.y + (self.tracker_page.height - self.tracker_page.norm_image_size[1])/2)
+                y3 = y2 + (self.tracker_page.y - (self.tracker_page.height - self.tracker_page.norm_image_size[1])/2)
                 x4 = x3 / ((self.tracker_page.norm_image_size[0] / self.tracker_page.texture_size[0]) if self.tracker_page.texture_size[0] > 0 else 1)
                 y4 = y3 / ((self.tracker_page.norm_image_size[1] / self.tracker_page.texture_size[1]) if self.tracker_page.texture_size[0] > 0 else 1)
                 x5 = x4 + self.width/2
                 y5 = y4 + self.width/2
                 return (x5,y5)
+            
+            def on_mouse_pos(self, window, pos): #this does nothing, but it's kept here to make adding debug prints easier
+                return super().on_mouse_pos(window, pos)
 
             def to_window(self, x, y):
                 if self.border_point:
