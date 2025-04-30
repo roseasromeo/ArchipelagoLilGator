@@ -419,14 +419,14 @@ class TrackerGameContext(CommonContext):
                 location_id_to_name = AutoWorld.AutoWorldRegister.world_types[ctx.game].location_id_to_name
                 sReturn = []
                 for loc,status in self.locationDict.items():
-                    color = "000000"
+                    color = "FFFFFF"
                     if status == "in_logic":
                         color = "20ff20"
                     elif status == "out_of_logic":
                         color = "cf1010"
                     elif status == "glitched":
                         color = "ffff20"
-                    sReturn.append(f"[color={color}]{location_id_to_name[loc]} : {status}[/color]") 
+                    sReturn.append(f"{location_id_to_name[loc]} : [color={color}]{status}[/color]") 
                 return "\n".join(sReturn)
 
             @staticmethod

@@ -54,7 +54,22 @@
 <ApAsyncImage>:
 
 <TrackerTooltip>:
-    background_color: .2, .2, .2
+    canvas.before:
+        Color:
+            rgba: 0.2, 0.2, 0.2, 1
+        Rectangle:
+            size: self.size
+            pos: self.pos
+        Color:
+            rgba: 0.098, 0.337, 0.431, 1
+        Line:
+            width: 3
+            rectangle: self.x-2, self.y-2, self.width+4, self.height+4
+        Color:
+            rgba: 0.235, 0.678, 0.843, 1
+        Line:
+            width: 1
+            rectangle: self.x-2, self.y-2, self.width+4, self.height+4
 
 <ApLocation>:
     text: "Server:"
