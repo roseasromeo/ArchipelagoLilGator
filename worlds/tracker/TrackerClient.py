@@ -36,7 +36,29 @@ ITEMS_HANDLING = 0b111
 REGEN_WORLDS = {name for name, world in AutoWorld.AutoWorldRegister.world_types.items() if getattr(world, "ut_can_gen_without_yaml", False)}
 UT_MAP_TAB_KEY = "UT_MAP"
 
-
+def get_ut_color(color: str):
+    from kvui import Widget
+    from typing import ClassVar
+    from kivy.properties import StringProperty
+    class UTTextColor(Widget):
+        in_logic: ClassVar[str] = StringProperty("")
+        glitched: ClassVar[str] = StringProperty("") 
+        out_of_logic: ClassVar[str] = StringProperty("") 
+        collected: ClassVar[str] = StringProperty("") 
+        in_logic_glitched: ClassVar[str] = StringProperty("") 
+        out_of_logic_glitched: ClassVar[str] = StringProperty("") 
+        mixed_logic: ClassVar[str] = StringProperty("") 
+        collected_light: ClassVar[str] = StringProperty("") 
+        hinted: ClassVar[str] = StringProperty("") 
+        hinted_in_logic: ClassVar[str] = StringProperty("") 
+        hinted_out_of_logic: ClassVar[str] = StringProperty("") 
+        hinted_glitched: ClassVar[str] = StringProperty("") 
+        excluded: ClassVar[str] = StringProperty("") 
+    if not hasattr(get_ut_color,"utTextColor"):
+        get_ut_color.utTextColor = UTTextColor()
+    return str(getattr(get_ut_color.utTextColor,color,"DD00FF"))
+    
+    
 class TrackerCommandProcessor(ClientCommandProcessor):
     ctx: "TrackerGameContext"
 
@@ -368,7 +390,7 @@ class TrackerGameContext(CommonContext):
         class ApLocation(HoverBehavior, Widget, MDTooltip):
             from kivy.properties import DictProperty, ColorProperty
             locationDict = DictProperty()
-            color = ColorProperty("#DD00FF")
+            color = ColorProperty("#"+get_ut_color("error"))
 
             def __init__(self, sections, parent, **kwargs):
                 for location_id in sections:
@@ -419,36 +441,41 @@ class TrackerGameContext(CommonContext):
                 location_id_to_name = AutoWorld.AutoWorldRegister.world_types[ctx.game].location_id_to_name
                 sReturn = []
                 for loc,status in self.locationDict.items():
-                    color = "FFFFFF"
-                    if status == "in_logic":
-                        color = "20ff20"
-                    elif status == "out_of_logic":
-                        color = "cf1010"
-                    elif status == "glitched":
-                        color = "ffff20"
+                    color = get_ut_color("collected_light")
+                    if status in ["in_logic","out_of_logic","glitched","hinted_in_logic","hinted_out_of_logic","hinted_glitched"]:
+                        color = get_ut_color(status)
                     sReturn.append(f"{location_id_to_name[loc]} : [color={color}]{status}[/color]") 
                 return "\n".join(sReturn)
 
             @staticmethod
             def update_color(self, locationDict):
-                glitches = any(status == "glitches" for status in locationDict.values())
-                in_logic = any(status == "in_logic" for status in locationDict.values())
-                out_of_logic = any(status == "out_of_logic" for status in locationDict.values())
+                glitches = any(status.endswith("glitches") for status in locationDict.values())
+                in_logic = any(status.endswith("in_logic") for status in locationDict.values())
+                out_of_logic = any(status.endswith("out_of_logic") for status in locationDict.values())
+                hinted = any(status.startswith("hinted") for status in locationDict.values())
 
-                if out_of_logic and in_logic: # also glitches but also not glitches
-                    self.color = "#ff9f20"
+                if hinted and in_logic and (out_of_logic or glitches):
+                    self.color = "#"+get_ut_color("hinted_glitches")
+                elif hinted and in_logic:
+                    self.color = "#"+get_ut_color("hinted")
+                elif hinted and out_of_logic:
+                    self.color = "#"+get_ut_color("hinted_out_of_logic")
+                elif out_of_logic and in_logic: # also glitches but also not glitches
+                    self.color = "#"+get_ut_color("mixed_logic")
                 elif out_of_logic and glitches:
-                    self.color = "#ef5500"
+                    self.color = "#"+get_ut_color("out_of_logic_glitched")
                 elif in_logic and glitches:
-                    self.color = "#afff20"
+                    self.color = "#"+get_ut_color("in_logic_glitched")
                 elif in_logic:
-                    self.color = "#20ff20"
+                    self.color = "#"+get_ut_color("in_logic")
                 elif out_of_logic:
-                    self.color = "#cf1010"
+                    self.color = "#"+get_ut_color("out_of_logic")
                 elif glitches:
-                    self.color = "#ffff20"
+                    self.color = "#"+get_ut_color("glitches")
+                elif hinted: #not actually posible but still in here
+                    self.color = "#"+get_ut_color("hinted")
                 else:
-                    self.color = "#3F3F3F"
+                    self.color = "#"+get_ut_color("collected")
 
         class VisualTracker(BoxLayout):
             def load_coords(self, coords):
