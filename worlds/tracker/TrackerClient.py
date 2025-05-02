@@ -606,6 +606,10 @@ class TrackerGameContext(CommonContext):
 
                 return container
 
+            def update_hints(self):
+                updateTracker(self.ctx)
+                return super().update_hints()
+
         self.load_kv()
         return TrackerManager
 
@@ -1055,8 +1059,6 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
 
     if ctx.tracker_page:
         ctx.tracker_page.refresh_from_data()
-    if ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}" in ctx.stored_data:
-        ctx.ui.update_hints()
     if ctx.update_callback is not None:
         ctx.update_callback(callback_list)
     if ctx.region_callback is not None:
