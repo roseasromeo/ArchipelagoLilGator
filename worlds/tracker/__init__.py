@@ -76,12 +76,19 @@ class UTMapTabData:
     map_page_glitches_item_name: str
     """Item name to be artifically added to re-test for glitches logic"""
 
+    location_setting_key: str
+    """Data storage key used to determine where to place the location indicator"""
+
+    location_icon_coords: Callable[[int, Any], tuple[int,int,str]|None]
+    """Function used to convert between the map and the value in data storage into coords (or none to hide it) the return is [x, y, override path string]"""
+
     def __init__(
             self, player_id, team_id, map_page_folder: str = "", map_page_maps: list[str] | str = "",
             map_page_locations: list[str] | str = "", map_page_setting_key: str | None = None,
             map_page_index: Callable[[Any], int] | None = None, external_pack_key: str = "",
             poptracker_name_mapping: dict[str, int] | None = None,
-            map_page_glitches_item_name: str = "", **kwargs):
+            map_page_glitches_item_name: str = "", location_setting_key: str|None = None,
+            location_icon_coords: Callable[[int, Any], tuple[int,int]|None]= None, **kwargs):
         self.map_page_folder = map_page_folder
         if isinstance(map_page_maps, str):
             self.map_page_maps = [map_page_maps]
@@ -104,6 +111,14 @@ class UTMapTabData:
             self.poptracker_name_mapping = {}
         self.external_pack_key = external_pack_key
         self.map_page_glitches_item_name = map_page_glitches_item_name
+        self.location_setting_key = location_setting_key
+        if isinstance(self.location_setting_key, str):
+            self.location_setting_key = self.location_setting_key.format(player=player_id, team=team_id)
+        print(self.location_setting_key)
+        if location_icon_coords and callable(location_icon_coords):
+            self.location_icon_coords = location_icon_coords
+        else:
+            self.location_icon_coords = lambda _,__: None
 
 
 icon_paths["ut_ico"] = f"ap:{__name__}/icon.png"

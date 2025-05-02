@@ -231,6 +231,9 @@ class TrackerGameContext(CommonContext):
         self.quit_after_update = print_list or print_count
         self.print_list = print_list
         self.print_count = print_count
+        self.location_icon = None
+        self.root_pack_path = None
+        self.map_id = None
 
     def load_pack(self):
         self.maps = []
@@ -280,19 +283,21 @@ class TrackerGameContext(CommonContext):
             if isinstance(map_id, str):
                 map_id = int(map_id)
             m = self.maps[map_id]
+        self.map_id = map_id
         location_name_to_id = AutoWorld.AutoWorldRegister.world_types[self.game].location_name_to_id
         # m = [m for m in self.maps if m["name"] == map_name]
         if self.tracker_world.external_pack_key:
             from zipfile import is_zipfile
             packRef = self.multiworld.worlds[self.player_id].settings[self.tracker_world.external_pack_key]
             if packRef and is_zipfile(packRef):
-                self.ui.source = f"ap:zip:{packRef}/{m['img']}"
+                self.root_pack_path = f"ap:zip:{packRef}"
             else:
                 logger.error("Player poptracker doesn't seem to exist :< (must be a zip file)")
                 return
         else:
             PACK_NAME = self.multiworld.worlds[self.player_id].__class__.__module__
-            self.ui.source = f"ap:{PACK_NAME}/{self.tracker_world.map_page_folder}/{m['img']}"
+            self.root_pack_path = f"ap:{PACK_NAME}/{self.tracker_world.map_page_folder}"
+        self.ui.source = f"{self.root_pack_path}/{m['img']}"
         self.ui.loc_size = m["location_size"] if "location_size" in m else 65  # default location size per poptracker/src/core/map.h
         self.ui.loc_border = m["location_border_thickness"] if "location_border_thickness" in m else 8  # default location size per poptracker/src/core/map.h
         temp_locs = [location for location in self.locs]
@@ -387,6 +392,9 @@ class TrackerGameContext(CommonContext):
                 if sort:
                     self.data.sort(key=lambda e: e["text"])
 
+        class ApLocationIcon(ApAsyncImage):
+            pass
+
         class ApLocation(HoverBehavior, Widget, MDTooltip):
             from kivy.properties import DictProperty, ColorProperty
             locationDict = DictProperty()
@@ -478,8 +486,10 @@ class TrackerGameContext(CommonContext):
                     self.color = "#"+get_ut_color("collected")
 
         class VisualTracker(BoxLayout):
+            location_icon: ApLocationIcon
             def load_coords(self, coords):
                 self.ids.location_canvas.clear_widgets()
+                self.ids.location_canvas.add_widget(self.location_icon)
                 returnDict = defaultdict(list)
                 for coord, sections in coords.items():
                     # https://discord.com/channels/731205301247803413/1170094879142051912/1272327822630977727
@@ -498,7 +508,9 @@ class TrackerGameContext(CommonContext):
             tracker.add_widget(tracker_view)
             self.tracker_page = tracker_view
             tracker_page.content = tracker
+            self.location_icon = ApLocationIcon()
             map = VisualTracker()
+            map.location_icon = self.location_icon
             self.map_page_coords_func = map.load_coords
             self.map_page = map_page
             map_page.content = map
@@ -542,6 +554,7 @@ class TrackerGameContext(CommonContext):
             loc_size = NumericProperty(20)
             loc_border = NumericProperty(5)
             enable_map = BooleanProperty(False)
+            iconSource = StringProperty("")
             base_title = f"Tracker {UT_VERSION} for AP version"  # core appends ap version so this works
 
             def build(self):
@@ -692,6 +705,8 @@ class TrackerGameContext(CommonContext):
                         self.ui.tabs.show_map = True
                         key = self.tracker_world.map_page_setting_key or f"{self.slot}_{self.team}_{UT_MAP_TAB_KEY}"
                         self.set_notify(key)
+                        icon_key = self.tracker_world.location_setting_key
+                        self.set_notify(icon_key)
                 else:
                     self.tracker_world = None
                 if self.tracker_world:
@@ -713,9 +728,23 @@ class TrackerGameContext(CommonContext):
             elif cmd == 'SetReply':
                 if self.ui is not None and hasattr(AutoWorld.AutoWorldRegister.world_types[self.game], "tracker_world"):
                     key = self.tracker_world.map_page_setting_key or f"{self.slot}_{self.team}_{UT_MAP_TAB_KEY}"
-                    if "key" in args and args["key"] == key:
-                        self.load_map(None)
-                        updateTracker(self)
+                    icon_key = self.tracker_world.location_setting_key
+                    if "key" in args:
+                        if args["key"] == key:
+                            self.load_map(None)
+                            updateTracker(self)
+                        elif args["key"] == icon_key:
+                            temp_ret = self.tracker_world.location_icon_coords(self.map_id,self.stored_data.get(icon_key, ""))
+                            if temp_ret:
+                                (x,y,ref) = temp_ret #should be a 3-tuple
+                                if x < 0 or y < 0:
+                                    self.location_icon.size = (0,0)
+                                else:
+                                    self.ui.iconSource = f"{self.root_pack_path}/{ref}"
+                                    print(self.ui.iconSource)
+                                    print(self.ui.source)
+                                    self.location_icon.size = (self.ui.loc_size/2, self.ui.loc_size/2)
+                                    self.location_icon.pos = (x,y)
         except Exception as e:
             e.args = e.args+("This is likely a UT error, make sure you have the correct tracker.apworld version and no duplicates",
                              "Then try to reproduce with the debug launcher and post in the Discord channel")
@@ -740,6 +769,9 @@ class TrackerGameContext(CommonContext):
                     self.command_processor.commands["load_map"] = None
                 if "list_maps" in self.command_processor.commands:
                     self.command_processor.commands["list_maps"] = None
+                self.location_icon = None
+                self.map_id = None
+                self.root_pack_path = None
             self.tracker_world = None
             self.multiworld = None
             # TODO: persist these per url+slot(+seed)?
