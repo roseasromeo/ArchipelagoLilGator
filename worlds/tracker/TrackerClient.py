@@ -715,9 +715,9 @@ class TrackerGameContext(CommonContext):
                 else:
                     self.tracker_world = None
                 if self.tracker_world:
-                    if "load_map" not in self.command_processor.commands:
+                    if "load_map" not in self.command_processor.commands or not self.command_processor.commands["load_map"]:
                         self.command_processor.commands["load_map"] = cmd_load_map
-                    if "list_maps" not in self.command_processor.commands:
+                    if "list_maps" not in self.command_processor.commands or not self.command_processor.commands["list_maps"]:
                         self.command_processor.commands["list_maps"] = cmd_list_maps
 
 
