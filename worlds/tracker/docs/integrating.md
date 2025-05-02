@@ -91,8 +91,15 @@ from typing import ClassVar
 
 You can more easily define the setting key with slot and team values by defining a `__init__` function for your World class and including the following
 ```py
-        "map_page_setting_key": f"{self.player}_CURRENT_MAP"
+        "map_page_setting_key": "{player}_CURRENT_MAP"
 ```
+
+This key has two special values that UT will replace with the correct values in run time (because the struct needs to be a static class var)
+
+ * `{player}` : replaced with the external player slot number  
+ * `{team}` : replaced with the external team number (almost always going to be 1)  
+
+ *Note*: These are not f string values, these are literal string values on the world side
 
 for `external_pack_key` you can define the setting like this, this should point to a zipped poptracker pack
 ```py
