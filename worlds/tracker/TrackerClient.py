@@ -995,6 +995,10 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
     locations = []
     readable_locations = []
     glitches_locations = []
+    hints = []
+    if f"_read_hints_{ctx.team}_{ctx.slot}" in ctx.stored_data:
+        from NetUtils import HintStatus
+        hints = [ hint["location"] for hint in ctx.stored_data[f"_read_hints_{ctx.team}_{ctx.slot}"] if hint["status"] != HintStatus.HINT_FOUND and ctx.slot_concerns_self(hint["finding_player"]) ]
     for temp_loc in ctx.multiworld.get_reachable_locations(state, ctx.player_id):
         if temp_loc.address is None or isinstance(temp_loc.address, list):
             continue
@@ -1014,10 +1018,21 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
                 if temp_loc.address in ctx.location_alias_map:
                     temp_name += f" ({ctx.location_alias_map[temp_loc.address]})"
                 if ctx.output_format == "Both":
-                    ctx.log_to_tab(region + " | " + temp_name, True)
+                    if temp_loc.progress_type == LocationProgressType.EXCLUDED:
+                        ctx.log_to_tab("[color="+get_ut_color("excluded") + "]" +region + " | " + temp_name+"[/color]", True)
+                    elif temp_loc.address in hints:
+                        ctx.log_to_tab("[color="+get_ut_color("hinted") + "]" +region + " | " + temp_name+"[/color]", True)
+                    else:
+                        ctx.log_to_tab(region + " | " + temp_name, True)
                     readable_locations.append(region + " | " + temp_name)
                 elif ctx.output_format == "Location":
-                    ctx.log_to_tab(temp_name, True)
+                    if temp_loc.progress_type == LocationProgressType.EXCLUDED:
+                        print("excluded?")
+                        ctx.log_to_tab("[color="+get_ut_color("excluded") + "]" +temp_name+"[/color]", True)
+                    elif temp_loc.address in hints:
+                        ctx.log_to_tab("[color="+get_ut_color("hinted") + "]" +temp_name+"[/color]", True)
+                    else:
+                        ctx.log_to_tab(temp_name, True)
                     readable_locations.append(temp_name)
                 if region not in regions:
                     regions.append(region)
@@ -1074,6 +1089,7 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
         # ctx.load_map()
         for location in ctx.server_locations:
             relevent_coords = ctx.coord_dict.get(location, [])
+            
             if location in ctx.checked_locations or location in ctx.ignored_locations:
                 status = "completed"
             elif location in ctx.locations_available:
@@ -1082,6 +1098,8 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
                 status = "glitches"
             else:
                 status = "out_of_logic"
+            if location in hints:
+                status = "hinted_"+status
             for coord in relevent_coords:
                 coord.update_status(location, status)
     if ctx.quit_after_update:
