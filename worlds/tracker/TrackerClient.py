@@ -367,16 +367,16 @@ class TrackerGameContext(CommonContext):
     def build_gui(self, manager: "GameManager"):
         from kivy.uix.boxlayout import BoxLayout
         from kvui import MDTabsItem, MDTabsItemText, MDRecycleView, HoverBehavior
-        from kivymd.uix.tooltip import MDTooltip,MDTooltipPlain
+        from kivymd.uix.tooltip import MDTooltip
         from kivy.uix.widget import Widget
         from kivy.properties import StringProperty, NumericProperty, BooleanProperty
-        from kvui import ApAsyncImage
+        from kvui import ApAsyncImage, ToolTip
         from .TrackerKivy import SomethingNeatJustToMakePythonHappy
 
         class TrackerLayout(BoxLayout):
             pass
 
-        class TrackerTooltip(MDTooltipPlain):
+        class TrackerTooltip(ToolTip):
             pass
     
         class TrackerView(MDRecycleView):
