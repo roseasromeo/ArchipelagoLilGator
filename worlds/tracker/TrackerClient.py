@@ -295,24 +295,25 @@ class TrackerGameContext(CommonContext):
                 )
         }
         poptracker_name_mapping = self.tracker_world.poptracker_name_mapping
-        tempCoords = {  # compat coords
-            (map_loc["x"], map_loc["y"]):
-                [poptracker_name_mapping[f'{location["name"]}/{section["name"]}']
-                 for section in location["sections"] if "name" in section
-                 and f'{location["name"]}/{section["name"]}' in poptracker_name_mapping
-                 and poptracker_name_mapping[f'{location["name"]}/{section["name"]}'] in self.server_locations]
-            for location in map_locs
-            for map_loc in location["map_locations"]
-            if map_loc["map"] == m["name"]
-            and any("name" in section and f'{location["name"]}/{section["name"]}' in poptracker_name_mapping
-                    and poptracker_name_mapping[f'{location["name"]}/{section["name"]}'] in self.server_locations
-                    for section in location["sections"])
-        }
-        for maploc, seclist in tempCoords.items():
-            if maploc in self.coords:
-                self.coords[maploc] += seclist
-            else:
-                self.coords[maploc] = seclist
+        if poptracker_name_mapping:
+            tempCoords = {  # compat coords
+                (map_loc["x"], map_loc["y"]):
+                    [poptracker_name_mapping[f'{location["name"]}/{section["name"]}']
+                    for section in location["sections"] if "name" in section
+                    and f'{location["name"]}/{section["name"]}' in poptracker_name_mapping
+                    and poptracker_name_mapping[f'{location["name"]}/{section["name"]}'] in self.server_locations]
+                for location in map_locs
+                for map_loc in location["map_locations"]
+                if map_loc["map"] == m["name"]
+                and any("name" in section and f'{location["name"]}/{section["name"]}' in poptracker_name_mapping
+                        and poptracker_name_mapping[f'{location["name"]}/{section["name"]}'] in self.server_locations
+                        for section in location["sections"])
+            }
+            for maploc, seclist in tempCoords.items():
+                if maploc in self.coords:
+                    self.coords[maploc] += seclist
+                else:
+                    self.coords[maploc] = seclist
         self.coord_dict = self.map_page_coords_func(self.coords)
 
     def clear_page(self):
