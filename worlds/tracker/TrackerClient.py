@@ -1145,7 +1145,7 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
             elif location in ctx.locations_available:
                 status = "in_logic"
             elif location in glitches_locations:
-                status = "glitches"
+                status = "glitched"
             else:
                 status = "out_of_logic"
             if location in hints:
