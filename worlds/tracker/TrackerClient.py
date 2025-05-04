@@ -474,31 +474,29 @@ class TrackerGameContext(CommonContext):
 
             @staticmethod
             def update_color(self, locationDict):
-                glitches = any(status.endswith("glitches") for status in locationDict.values())
+                glitches = any(status.endswith("glitched") for status in locationDict.values())
                 in_logic = any(status.endswith("in_logic") for status in locationDict.values())
                 out_of_logic = any(status.endswith("out_of_logic") for status in locationDict.values())
                 hinted = any(status.startswith("hinted") for status in locationDict.values())
 
-                if hinted and in_logic and (out_of_logic or glitches):
-                    self.color = "#"+get_ut_color("hinted_glitches")
-                elif hinted and in_logic:
-                    self.color = "#"+get_ut_color("hinted")
+                if in_logic and (out_of_logic or (glitches and hinted)):
+                    self.color = "#"+get_ut_color("mixed_logic")
+                elif glitches and hinted:
+                    self.color = "#"+get_ut_color("hinted_glitched")
                 elif hinted and out_of_logic:
                     self.color = "#"+get_ut_color("hinted_out_of_logic")
-                elif out_of_logic and in_logic: # also glitches but also not glitches
-                    self.color = "#"+get_ut_color("mixed_logic")
-                elif out_of_logic and glitches:
-                    self.color = "#"+get_ut_color("out_of_logic_glitched")
-                elif in_logic and glitches:
+                elif hinted:
+                    self.color = "#"+get_ut_color("hinted")
+                elif glitches and in_logic:
                     self.color = "#"+get_ut_color("in_logic_glitched")
+                elif glitches and out_of_logic:
+                    self.color = "#"+get_ut_color("out_of_logic_glitched")
                 elif in_logic:
                     self.color = "#"+get_ut_color("in_logic")
                 elif out_of_logic:
                     self.color = "#"+get_ut_color("out_of_logic")
                 elif glitches:
-                    self.color = "#"+get_ut_color("glitches")
-                elif hinted: #not actually posible but still in here
-                    self.color = "#"+get_ut_color("hinted")
+                    self.color = "#"+get_ut_color("glitched")
                 else:
                     self.color = "#"+get_ut_color("collected")
 
