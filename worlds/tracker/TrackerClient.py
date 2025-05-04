@@ -198,7 +198,6 @@ class TrackerGameContext(CommonContext):
         else:
             super().__init__(server_address, password)
         self.items_handling = ITEMS_HANDLING
-        self.locations_checked = []
         self.locations_available = []
         self.datapackage = []
         self.multiworld: MultiWorld = None
