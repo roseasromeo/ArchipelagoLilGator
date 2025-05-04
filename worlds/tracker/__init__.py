@@ -77,9 +77,6 @@ class UTMapTabData:
     poptracker_name_mapping: dict[str, int]
     """Mapping from [poptracker name : datapackage location id] """
 
-    map_page_glitches_item_name: str
-    """Item name to be artifically added to re-test for glitches logic"""
-
     location_setting_key: str
     """Data storage key used to determine where to place the location indicator"""
 
@@ -91,7 +88,7 @@ class UTMapTabData:
             map_page_locations: list[str] | str = "", map_page_setting_key: str | None = None,
             map_page_index: Callable[[Any], int] | None = None, external_pack_key: str = "",
             poptracker_name_mapping: dict[str, int] | None = None,
-            map_page_glitches_item_name: str = "", location_setting_key: str|None = None,
+            location_setting_key: str|None = None,
             location_icon_coords: Callable[[int, Any], tuple[int,int]|None]= None, **kwargs):
         self.map_page_folder = map_page_folder
         if isinstance(map_page_maps, str):
@@ -114,7 +111,6 @@ class UTMapTabData:
         else:
             self.poptracker_name_mapping = {}
         self.external_pack_key = external_pack_key
-        self.map_page_glitches_item_name = map_page_glitches_item_name
         self.location_setting_key = location_setting_key
         if isinstance(self.location_setting_key, str):
             self.location_setting_key = self.location_setting_key.format(player=player_id, team=team_id)
