@@ -900,9 +900,7 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
             if (temp_loc.address in ctx.missing_locations):
                 # logger.info("YES rechable (" + temp_loc.name + ")")
                 region = ""
-                if temp_loc.parent_region is None:
-                    region = ""
-                else:
+                if temp_loc.parent_region is not None:
                     region = temp_loc.parent_region.name
                 temp_name = temp_loc.name
                 if temp_loc.address in ctx.location_alias_map:
