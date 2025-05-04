@@ -305,6 +305,7 @@ class TrackerGameContext(CommonContext):
             self.root_pack_path = f"ap:{PACK_NAME}/{self.tracker_world.map_page_folder}"
         self.ui.source = f"{self.root_pack_path}/{m['img']}"
         self.ui.loc_size = m["location_size"] if "location_size" in m else 65  # default location size per poptracker/src/core/map.h
+        self.ui.loc_icon_size = m["location_icon_size"] if "location_icon_size" in m else self.ui.loc_size
         self.ui.loc_border = m["location_border_thickness"] if "location_border_thickness" in m else 8  # default location size per poptracker/src/core/map.h
         temp_locs = [location for location in self.locs]
         map_locs = []
@@ -542,7 +543,6 @@ class TrackerGameContext(CommonContext):
             location_icon: ApLocationIcon
             def load_coords(self, coords, use_split):
                 self.ids.location_canvas.clear_widgets()
-                self.ids.location_canvas.add_widget(self.location_icon)
                 returnDict = defaultdict(list)
                 for coord, sections in coords.items():
                     # https://discord.com/channels/731205301247803413/1170094879142051912/1272327822630977727
@@ -551,6 +551,7 @@ class TrackerGameContext(CommonContext):
                     self.ids.location_canvas.add_widget(temp_loc)
                     for location_id in sections:
                         returnDict[location_id].append(temp_loc)
+                self.ids.location_canvas.add_widget(self.location_icon)
                 return returnDict
 
         tracker_page = MDTabsItem(MDTabsItemText(text="Tracker Page"))
@@ -606,6 +607,7 @@ class TrackerGameContext(CommonContext):
         class TrackerManager(ui):
             source = StringProperty("")
             loc_size = NumericProperty(20)
+            loc_icon_size = NumericProperty(20)
             loc_border = NumericProperty(5)
             enable_map = BooleanProperty(False)
             iconSource = StringProperty("")

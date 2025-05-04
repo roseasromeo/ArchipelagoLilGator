@@ -70,12 +70,18 @@
     id: location_icon
     source: app.iconSource
     size: (0,0)
-    #canvas:
-    #    Color:
-    #        rgb: (1,1,1,1)
-    #    Rectangle:
-    #        pos: self.x-self.width/2, self.y-self.height/2
-    #        size: self.size
+    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+    canvas.before:
+        PushMatrix:
+        Rotate:
+            origin: location_icon.center
+            angle: 180
+            axis: 1, 0, 0
+        Translate:
+            xy: (-location_icon.norm_image_size[0]/2,location_icon.norm_image_size[1]/2)
+    canvas.after:
+        #close transformations in after canvas so all objects get transformed
+        PopMatrix:
 
 <TrackerTooltip>:
     pos_hint: {}
