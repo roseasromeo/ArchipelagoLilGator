@@ -765,7 +765,8 @@ class TrackerGameContext(CommonContext):
                             key = self.tracker_world.map_page_setting_key or f"{self.slot}_{self.team}_{UT_MAP_TAB_KEY}"
                             self.set_notify(key)
                         icon_key = self.tracker_world.location_setting_key
-                        self.set_notify(icon_key)
+                        if icon_key:
+                            self.set_notify(icon_key)
                 else:
                     self.tracker_world = None
                 if self.tracker_world:
