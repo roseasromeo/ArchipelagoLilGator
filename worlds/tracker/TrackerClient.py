@@ -871,9 +871,10 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
     callback_list = []
 
     item_id_to_name = ctx.multiworld.worlds[ctx.player_id].item_id_to_name
-    for item_name in [item_id_to_name[item[0]] for item in ctx.items_received] + ctx.manual_items:
+    for item_name, item_flags in [(item_id_to_name[item.item],item.flags) for item in ctx.items_received] + [(name,ItemClassification.progression) for name in ctx.manual_items]:
         try:
             world_item = ctx.multiworld.create_item(item_name, ctx.player_id)
+            world_item.classification = world_item.classification | item_flags
             state.collect(world_item, True)
             if world_item.advancement:
                 prog_items[world_item.name] += 1
