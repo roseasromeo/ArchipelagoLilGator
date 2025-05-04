@@ -620,8 +620,9 @@ class TrackerGameContext(CommonContext):
                     self.load_pack()
                     if self.tracker_world:  # don't show the map if loading failed
                         self.ui.tabs.show_map = True
-                        key = self.tracker_world.map_page_setting_key or f"{self.slot}_{self.team}_{UT_MAP_TAB_KEY}"
-                        self.set_notify(key)
+                        if self.tracker_world.map_page_index:
+                            key = self.tracker_world.map_page_setting_key or f"{self.slot}_{self.team}_{UT_MAP_TAB_KEY}"
+                            self.set_notify(key)
                 else:
                     self.tracker_world = None
                 if self.tracker_world:
