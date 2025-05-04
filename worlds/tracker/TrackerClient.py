@@ -1119,6 +1119,33 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
                 try:
                     if (temp_loc.address in ctx.missing_locations):
                         glitches_locations.append(temp_loc.address)
+                        region = ""
+                        if temp_loc.parent_region is not None:  
+                            region = temp_loc.parent_region.name
+                        temp_name = temp_loc.name
+                        if temp_loc.address in ctx.location_alias_map:
+                            temp_name += f" ({ctx.location_alias_map[temp_loc.address]})"
+                        if ctx.output_format == "Both":
+                            if temp_loc.progress_type == LocationProgressType.EXCLUDED:
+                                ctx.log_to_tab("[color="+get_ut_color("out_of_logic_glitched") + "]" +region + " | " + temp_name+"[/color]", True)
+                            elif temp_loc.address in hints:
+                                ctx.log_to_tab("[color="+get_ut_color("hinted_glitched") + "]" +region + " | " + temp_name+"[/color]", True)
+                            else:
+                                ctx.log_to_tab("[color="+get_ut_color("glitched") + "]" +region + " | " + temp_name+"[/color]", True)
+                            readable_locations.append(region + " | " + temp_name)
+                        elif ctx.output_format == "Location":
+                            if temp_loc.progress_type == LocationProgressType.EXCLUDED:
+                                ctx.log_to_tab("[color="+get_ut_color("out_of_logic_glitched") + "]" +temp_name+"[/color]", True)
+                            elif temp_loc.address in hints:
+                                ctx.log_to_tab("[color="+get_ut_color("hinted_glitched") + "]" +temp_name+"[/color]", True)
+                            else:
+                                ctx.log_to_tab("[color="+get_ut_color("glitched") + "]" +temp_name+"[/color]", True)
+                            readable_locations.append(temp_name)
+                        if region not in regions:
+                            regions.append(region)
+                            if ctx.output_format == "Region":
+                                ctx.log_to_tab("[color="+get_ut_color("glitched")+"]"+region+"[/color]", True)
+                                readable_locations.append(region)
                 except Exception:
                     ctx.log_to_tab("ERROR: location " + temp_loc.name + " broke something, report this to discord")
                     pass
