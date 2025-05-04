@@ -1032,7 +1032,6 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
                     readable_locations.append(region + " | " + temp_name)
                 elif ctx.output_format == "Location":
                     if temp_loc.progress_type == LocationProgressType.EXCLUDED:
-                        print("excluded?")
                         ctx.log_to_tab("[color="+get_ut_color("excluded") + "]" +temp_name+"[/color]", True)
                     elif temp_loc.address in hints:
                         ctx.log_to_tab("[color="+get_ut_color("hinted") + "]" +temp_name+"[/color]", True)
