@@ -205,6 +205,7 @@ class TrackerGameContext(CommonContext):
     gen_error = None
     output_format = "Both"
     hide_excluded = False
+    use_split = True
     re_gen_passthrough = None
     cached_multiworlds: list[MultiWorld] = []
     cached_slot_data: list[dict[str, Any]] = []
@@ -346,7 +347,7 @@ class TrackerGameContext(CommonContext):
                     self.coords[maploc] += seclist
                 else:
                     self.coords[maploc] = seclist
-        self.coord_dict = self.map_page_coords_func(self.coords)
+        self.coord_dict = self.map_page_coords_func(self.coords,self.use_split)
 
     def clear_page(self):
         if self.tracker_page is not None:
@@ -404,7 +405,6 @@ class TrackerGameContext(CommonContext):
         class ApLocation(HoverBehavior, Widget, MDTooltip):
             from kivy.properties import DictProperty, ColorProperty
             locationDict = DictProperty()
-            color = ColorProperty("#"+get_ut_color("error"))
 
             def __init__(self, sections, parent, **kwargs):
                 for location_id in sections:
@@ -461,6 +461,16 @@ class TrackerGameContext(CommonContext):
                     sReturn.append(f"{location_id_to_name[loc]} : [color={color}]{status}[/color]") 
                 return "\n".join(sReturn)
 
+            def update_color(self, locationDict):
+                return
+            
+        class APLocationMixed(ApLocation):
+            from kivy.properties import ColorProperty
+            color = ColorProperty("#"+get_ut_color("error"))
+
+            def __init__(self, sections, parent, **kwargs):
+                super().__init__(sections, parent, **kwargs)
+
             @staticmethod
             def update_color(self, locationDict):
                 glitches = any(status.endswith("glitches") for status in locationDict.values())
@@ -491,15 +501,53 @@ class TrackerGameContext(CommonContext):
                 else:
                     self.color = "#"+get_ut_color("collected")
 
+        class APLocationSplit(ApLocation):
+            from kivy.properties import ColorProperty
+            color_1 = ColorProperty("#"+get_ut_color("error"))
+            color_2 = ColorProperty("#"+get_ut_color("error"))
+            color_3 = ColorProperty("#"+get_ut_color("error"))
+            color_4 = ColorProperty("#"+get_ut_color("error"))
+            def __init__(self, sections, parent, **kwargs):
+                super().__init__(sections, parent, **kwargs)
+
+            @staticmethod
+            def update_color(self, locationDict):
+                glitches = any(status.endswith("glitched") for status in locationDict.values())
+                in_logic = any(status.endswith("in_logic") for status in locationDict.values())
+                out_of_logic = any(status.endswith("out_of_logic") for status in locationDict.values())
+                hinted = any(status.startswith("hinted") for status in locationDict.values())
+
+                color_list = []
+                if in_logic:
+                    color_list.append("in_logic")
+                if out_of_logic:
+                    color_list.append("out_of_logic")
+                if glitches:
+                    color_list.append("glitched")
+                if hinted:
+                    color_list.append("hinted")
+                if color_list:
+                    color_list = (color_list * max(2, (4 // len(color_list))))[:4]
+                    self.color_1="#"+get_ut_color(color_list[0])
+                    self.color_2="#"+get_ut_color(color_list[1])
+                    self.color_3="#"+get_ut_color(color_list[2])
+                    self.color_4="#"+get_ut_color(color_list[3])
+                else:
+                    self.color_1="#"+get_ut_color("collected")
+                    self.color_2="#"+get_ut_color("collected")
+                    self.color_3="#"+get_ut_color("collected")
+                    self.color_4="#"+get_ut_color("collected")
+
         class VisualTracker(BoxLayout):
             location_icon: ApLocationIcon
-            def load_coords(self, coords):
+            def load_coords(self, coords, use_split):
                 self.ids.location_canvas.clear_widgets()
                 self.ids.location_canvas.add_widget(self.location_icon)
                 returnDict = defaultdict(list)
                 for coord, sections in coords.items():
                     # https://discord.com/channels/731205301247803413/1170094879142051912/1272327822630977727
-                    temp_loc = ApLocation(sections, self.ids.tracker_map, pos=(coord))
+                    ap_location_class = APLocationSplit if use_split else APLocationMixed
+                    temp_loc = ap_location_class(sections, self.ids.tracker_map, pos=(coord))
                     self.ids.location_canvas.add_widget(temp_loc)
                     for location_id in sections:
                         returnDict[location_id].append(temp_loc)
@@ -804,7 +852,7 @@ class TrackerGameContext(CommonContext):
         else:
             report_type = "Region"
         return tracker_settings['player_files_path'], report_type, tracker_settings[
-            'hide_excluded_locations']
+            'hide_excluded_locations'], tracker_settings["use_split_map_icons"]
 
     def run_generator(self, slot_data: dict | None = None, override_yaml_path: str | None = None):
         def move_slots(args: "Namespace", slot_name: str):
@@ -821,7 +869,7 @@ class TrackerGameContext(CommonContext):
             return args
 
         try:
-            yaml_path, self.output_format, self.hide_excluded = self._set_host_settings()
+            yaml_path, self.output_format, self.hide_excluded, self.use_split = self._set_host_settings()
             # strip command line args, they won't be useful from the client anyway
             sys.argv = sys.argv[:1]
             args = mystery_argparse()

@@ -31,11 +31,15 @@ class TrackerSettings(Group):
 
     class HideExcluded(Bool):
         """Have the UT tab ignore excluded locations"""
+    
+    class UseSplitMapIcons(Bool):
+        """Use split icons rather then mixed for the UT map tab"""
 
     player_files_path: TrackerPlayersPath = TrackerPlayersPath("Players")
     include_region_name: RegionNameBool | bool = False
     include_location_name: LocationNameBool | bool = True
     hide_excluded_locations: HideExcluded | bool = False
+    use_split_map_icons: UseSplitMapIcons | bool = True
 
 
 class TrackerWorld(World):

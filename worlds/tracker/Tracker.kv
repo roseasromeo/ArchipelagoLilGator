@@ -80,7 +80,7 @@
 <TrackerTooltip>:
     pos_hint: {}
 
-<ApLocation>:
+<ApLocationMixed>:
     text: "Server:"
     size_hint_x: None
     size: (app.loc_size, app.loc_size)
@@ -95,3 +95,34 @@
         Rectangle:
             pos: self.x-self.width/2, self.y-self.height/2
             size: self.size
+
+<ApLocationSplit>:
+    text: "Server:"
+    size_hint_x: None
+    size: (app.loc_size, app.loc_size)
+    color_2: (1, 0, 0)
+    color_4: (1, 1, 0)
+    color_1: (0, 1, 0)
+    color_3: (0, 0, 1)
+    canvas:
+        Color:
+            rgb: 0,0,0 
+        Rectangle:
+            pos: self.x - app.loc_border-self.width/2, self.y - app.loc_border-self.height/2
+            size: self.width + (app.loc_border * 2), self.height + (app.loc_border * 2)
+        Color:
+            rgb: self.color_1
+        Triangle:
+            points: self.x, self.y, self.x - (self.width / 2), self.y + (self.height /2), self.x + (self.width / 2), self.y + (self.height /2)
+        Color:
+            rgb: self.color_3
+        Triangle:
+            points: self.x, self.y, self.x + (self.width / 2), self.y - (self.height /2), self.x + (self.width / 2), self.y + (self.height /2)
+        Color:
+            rgb: self.color_2
+        Triangle:
+            points: self.x, self.y, self.x - (self.width / 2), self.y - (self.height /2), self.x + (self.width / 2), self.y - (self.height /2)
+        Color:
+            rgb: self.color_4
+        Triangle:
+            points: self.x, self.y, self.x - (self.width / 2), self.y - (self.height /2), self.x - (self.width / 2), self.y + (self.height /2)
