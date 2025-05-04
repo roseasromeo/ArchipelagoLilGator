@@ -926,13 +926,13 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
     events = [location.item.name for location in state.advancements if location.player == ctx.player_id]
 
     ctx.locations_available = locations
-
-    if ctx.tracker_world and ctx.tracker_world.map_page_glitches_item_name:
+    glitches_item_name = getattr(ctx.multiworld.worlds[ctx.player_id],"glitches_item_name","")
+    if glitches_item_name:
         try:
-            world_item = ctx.multiworld.create_item(ctx.tracker_world.map_page_glitches_item_name, ctx.player_id)
+            world_item = ctx.multiworld.create_item(glitches_item_name, ctx.player_id)
             state.collect(world_item, True)
         except Exception:
-            ctx.log_to_tab("Item id " + str(ctx.tracker_world.map_page_glitches_item_name) + " not able to be created", False)
+            ctx.log_to_tab("Item id " + str(glitches_item_name) + " not able to be created", False)
         else:
             state.sweep_for_advancements(
                 locations=[location for location in ctx.multiworld.get_locations(ctx.player_id) if (not location.address)])
