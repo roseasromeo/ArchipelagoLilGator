@@ -783,7 +783,7 @@ class TrackerGameContext(CommonContext):
                 self.watcher_task = asyncio.create_task(game_watcher(self), name="GameWatcher") #This shouldn't be needed, but technically 
             elif cmd == 'RoomUpdate':
                 updateTracker(self)
-            elif cmd == 'SetReply':
+            elif cmd == 'SetReply' or cmd == 'Retrieved':
                 if self.ui is not None and hasattr(AutoWorld.AutoWorldRegister.world_types[self.game], "tracker_world"):
                     key = self.tracker_world.map_page_setting_key or f"{self.slot}_{self.team}_{UT_MAP_TAB_KEY}"
                     icon_key = self.tracker_world.location_setting_key
@@ -799,10 +799,20 @@ class TrackerGameContext(CommonContext):
                                     self.location_icon.size = (0,0)
                                 else:
                                     self.ui.iconSource = f"{self.root_pack_path}/{ref}"
-                                    print(self.ui.iconSource)
-                                    print(self.ui.source)
-                                    self.location_icon.size = (self.ui.loc_size/2, self.ui.loc_size/2)
+                                    self.location_icon.size = (self.ui.loc_icon_size, self.ui.loc_icon_size)
                                     self.location_icon.pos = (x,y)
+                    elif "keys" in args:
+                        if icon_key in args["keys"]:
+                            temp_ret = self.tracker_world.location_icon_coords(self.map_id,self.stored_data.get(icon_key, ""))
+                            if temp_ret:
+                                (x,y,ref) = temp_ret #should be a 3-tuple
+                                if x < 0 or y < 0:
+                                    self.location_icon.size = (0,0)
+                                else:
+                                    self.ui.iconSource = f"{self.root_pack_path}/{ref}"
+                                    self.location_icon.size = (self.ui.loc_icon_size, self.ui.loc_icon_size)
+                                    self.location_icon.pos = (x,y)
+
         except Exception as e:
             e.args = e.args+("This is likely a UT error, make sure you have the correct tracker.apworld version and no duplicates",
                              "Then try to reproduce with the debug launcher and post in the Discord channel")
