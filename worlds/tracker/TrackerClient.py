@@ -386,7 +386,7 @@ class TrackerGameContext(CommonContext):
 
             @staticmethod
             def update_color(self, locationDict):
-                glitches = any(status == "glitches" for status in locationDict.values())
+                glitches = any(status == "glitched" for status in locationDict.values())
                 in_logic = any(status == "in_logic" for status in locationDict.values())
                 out_of_logic = any(status == "out_of_logic" for status in locationDict.values())
 
@@ -973,7 +973,7 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
             elif location in ctx.locations_available:
                 status = "in_logic"
             elif location in glitches_locations:
-                status = "glitches"
+                status = "glitched"
             else:
                 status = "out_of_logic"
             for coord in relevent_coords:
