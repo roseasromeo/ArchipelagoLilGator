@@ -80,7 +80,7 @@ class UTMapTabData:
             self, player_id, team_id, map_page_folder: str = "", map_page_maps: list[str] | str = "",
             map_page_locations: list[str] | str = "", map_page_setting_key: str | None = None,
             map_page_index: Callable[[Any], int] | None = None, external_pack_key: str = "",
-            poptracker_name_mapping: dict[str, int] | None = None):
+            poptracker_name_mapping: dict[str, int] | None = None, **kwargs):
         self.map_page_folder = map_page_folder
         if isinstance(map_page_maps, str):
             self.map_page_maps = [map_page_maps]

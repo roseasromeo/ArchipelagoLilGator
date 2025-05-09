@@ -547,7 +547,8 @@ class TrackerGameContext(CommonContext):
                 return container
 
             def update_hints(self):
-                updateTracker(self.ctx)
+                if self.ctx.player_id and self.ctx.multiworld:
+                    updateTracker(self.ctx)
                 return super().update_hints()
 
         self.load_kv()
@@ -556,9 +557,14 @@ class TrackerGameContext(CommonContext):
     def load_kv(self):
         from kivy.lang import Builder
         import pkgutil
+        from Utils import user_path
 
         data = pkgutil.get_data(TrackerWorld.__module__, "Tracker.kv").decode()
         Builder.load_string(data)
+        user_file = user_path("data","user.kv")
+        if os.path.exists(user_file):
+            logging.info("loading user.kv into builder.")
+            Builder.load_file(user_file)
 
     async def server_auth(self, password_requested: bool = False):
         if password_requested and not self.password:
