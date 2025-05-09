@@ -15,6 +15,7 @@ def launch_client(*args):
 class CurrentTrackerState(NamedTuple):
     all_items: Counter
     prog_items: Counter
+    glitched_items: Counter
     events: list[str]
     state: CollectionState
 
