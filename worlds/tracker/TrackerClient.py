@@ -181,6 +181,7 @@ class TrackerGameContext(CommonContext):
     update_callback: Callable[[list[str]], bool] | None = None
     region_callback: Callable[[list[str]], bool] | None = None
     events_callback: Callable[[list[str]], bool] | None = None
+    glitches_callback: Callable[[list[str]], bool] | None = None
     gen_error = None
     output_format = "Both"
     hide_excluded = False
@@ -221,6 +222,7 @@ class TrackerGameContext(CommonContext):
             super().__init__(server_address, password)
         self.items_handling = ITEMS_HANDLING
         self.locations_available = []
+        self.glitched_locations = []
         self.datapackage = []
         self.multiworld: MultiWorld = None
         self.launch_multiworld: MultiWorld = None
@@ -363,6 +365,9 @@ class TrackerGameContext(CommonContext):
 
     def set_events_callback(self, func: Callable[[list[str]], bool] | None = None):
         self.events_callback = func
+
+    def set_glitches_callback(self, func: Callable[[list[str]], bool] | None = None):
+        self.glitches_callback = func
 
     def build_gui(self, manager: "GameManager"):
         from kivy.uix.boxlayout import BoxLayout
@@ -982,7 +987,7 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
                 except Exception:
                     ctx.log_to_tab("ERROR: location " + temp_loc.name + " broke something, report this to discord")
                     pass
-
+    ctx.glitched_locations = glitches_locations
     if ctx.tracker_page:
         ctx.tracker_page.refresh_from_data()
     if ctx.update_callback is not None:
@@ -991,6 +996,8 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
         ctx.region_callback(regions)
     if ctx.events_callback is not None:
         ctx.events_callback(events)
+    if ctx.glitches_callback is not None:
+        ctx.glitches_callback(glitches_locations)
     if len(ctx.ignored_locations) > 0:
         ctx.log_to_tab(f"{len(ctx.ignored_locations)} ignored locations")
     if len(callback_list) == 0:
@@ -1003,7 +1010,7 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
                 status = "completed"
             elif location in ctx.locations_available:
                 status = "in_logic"
-            elif location in glitches_locations:
+            elif location in ctx.glitched_locations:
                 status = "glitched"
             else:
                 status = "out_of_logic"
@@ -1018,7 +1025,7 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
                 logger.error(i)
         ctx.exit_event.set()
 
-    return CurrentTrackerState(all_items, prog_items, events, state)
+    return CurrentTrackerState(all_items, prog_items, glitches_locations, events, state)
 
 
 async def game_watcher(ctx: TrackerGameContext) -> None:
