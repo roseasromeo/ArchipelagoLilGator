@@ -678,9 +678,8 @@ class TrackerGameContext(CommonContext):
                 if not (self.items_handling & 0b010):
                     self.scout_checked_locations()
                 updateTracker(self)
-            elif cmd == 'SetReply':
-                print(self.stored_data)
-                if self.ui is not None and hasattr(AutoWorld.AutoWorldRegister.world_types[self.game], "tracker_world"):
+            elif cmd == 'SetReply' or cmd == 'Retrieved':
+                if self.ui is not None and hasattr(AutoWorld.AutoWorldRegister.world_types[self.game], "tracker_world") and self.tracker_world:
                     key = self.tracker_world.map_page_setting_key or f"{self.slot}_{self.team}_{UT_MAP_TAB_KEY}"
                     if "key" in args and args["key"] == key:
                         self.load_map(None)
