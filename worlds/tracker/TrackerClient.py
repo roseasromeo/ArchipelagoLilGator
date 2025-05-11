@@ -313,6 +313,7 @@ class TrackerGameContext(CommonContext):
             for map in self.maps:
                 if map["name"] == map_id:
                     m = map
+                    map_id = self.maps.index(map)
                     break
             else:
                 logger.error("Attempted to load a map that doesn't exist")
