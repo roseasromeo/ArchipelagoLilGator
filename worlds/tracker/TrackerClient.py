@@ -313,6 +313,8 @@ class TrackerGameContext(CommonContext):
         while temp_locs:
             temp_loc = temp_locs.pop()
             if "map_locations" in temp_loc:
+                if "name" not in temp_loc:
+                    temp_loc["name"] = ""
                 map_locs.append(temp_loc)
             elif "children" in temp_loc:
                 temp_locs.extend(temp_loc["children"])
