@@ -274,8 +274,6 @@ class TrackerGameContext(CommonContext):
             map_id = self.tracker_world.map_page_index(self.stored_data.get(key, ""))
             if not self.auto_tab or map_id < 0 or map_id >= len(self.maps):
                 return  # special case, don't load a new map
-        if self.map_id is not None and self.map_id == map_id:
-            return  # map already loaded
         m = None
         if isinstance(map_id, str) and not map_id.isdecimal():
             for map in self.maps:
