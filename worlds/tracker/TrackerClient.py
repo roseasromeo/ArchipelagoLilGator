@@ -889,7 +889,6 @@ class TrackerGameContext(CommonContext):
                     self.command_processor.commands["load_map"] = None
                 if "list_maps" in self.command_processor.commands:
                     self.command_processor.commands["list_maps"] = None
-                self.location_icon = None
                 self.map_id = None
                 self.root_pack_path = None
             self.tracker_world = None
