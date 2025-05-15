@@ -609,7 +609,7 @@ class TrackerGameContext(CommonContext):
             self.tracker_total_locs_label = MDLabel(text="Locations: 0/0", halign="center")
             self.tracker_logic_locs_label = MDLabel(text="In Logic: 0", halign="center")
             self.tracker_glitched_locs_label = MDLabel(text=f"Glitched: [color={get_ut_color("glitched")}]0[/color]",  halign="center")
-            self.tracker_hinted_locs_label = MDLabel(text=f"Hinted: [color={get_ut_color("hinted")}]0[/color]", halign="center")
+            self.tracker_hinted_locs_label = MDLabel(text=f"Hinted: [color={get_ut_color("hinted_in_logic")}]0[/color]", halign="center")
             self.tracker_glitched_locs_label.markup = True
             self.tracker_hinted_locs_label.markup = True
             tracker_header.add_widget(self.tracker_total_locs_label)
@@ -928,7 +928,7 @@ class TrackerGameContext(CommonContext):
             if hasattr(self, "tracker_glitched_locs_label"):
                 self.tracker_glitched_locs_label.text = f"Glitched: [color={get_ut_color("glitched")}]0[/color]"
             if hasattr(self, "tracker_hinted_locs_label"):
-                self.tracker_hinted_locs_label.text = f"Hinted: [color={get_ut_color("hinted")}]0[/color]"
+                self.tracker_hinted_locs_label.text = f"Hinted: [color={get_ut_color("hinted_in_logic")}]0[/color]"
         self.local_items.clear()
 
         await super().disconnect(allow_autoreconnect)
@@ -1146,6 +1146,7 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
     readable_locations = []
     glitches_locations = []
     hints = []
+    hinted_locations = []
     if f"_read_hints_{ctx.team}_{ctx.slot}" in ctx.stored_data:
         from NetUtils import HintStatus
         hints = [ hint["location"] for hint in ctx.stored_data[f"_read_hints_{ctx.team}_{ctx.slot}"] if hint["status"] != HintStatus.HINT_FOUND and ctx.slot_concerns_self(hint["finding_player"]) ]
@@ -1170,6 +1171,7 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
                         ctx.log_to_tab("[color="+get_ut_color("excluded") + "]" +region + " | " + temp_name+"[/color]", True)
                     elif temp_loc.address in hints:
                         ctx.log_to_tab("[color="+get_ut_color("hinted") + "]" +region + " | " + temp_name+"[/color]", True)
+                        hinted_locations.append(temp_loc)
                     else:
                         ctx.log_to_tab(region + " | " + temp_name, True)
                     readable_locations.append(region + " | " + temp_name)
@@ -1178,6 +1180,7 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
                         ctx.log_to_tab("[color="+get_ut_color("excluded") + "]" +temp_name+"[/color]", True)
                     elif temp_loc.address in hints:
                         ctx.log_to_tab("[color="+get_ut_color("hinted") + "]" +temp_name+"[/color]", True)
+                        hinted_locations.append(temp_loc)
                     else:
                         ctx.log_to_tab(temp_name, True)
                     readable_locations.append(temp_name)
@@ -1227,6 +1230,7 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
                                 ctx.log_to_tab("[color="+get_ut_color("out_of_logic_glitched") + "]" +region + " | " + temp_name+"[/color]", True)
                             elif temp_loc.address in hints:
                                 ctx.log_to_tab("[color="+get_ut_color("hinted_glitched") + "]" +region + " | " + temp_name+"[/color]", True)
+                                hinted_locations.append(temp_loc)
                             else:
                                 ctx.log_to_tab("[color="+get_ut_color("glitched") + "]" +region + " | " + temp_name+"[/color]", True)
                             readable_locations.append(region + " | " + temp_name)
@@ -1235,6 +1239,7 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
                                 ctx.log_to_tab("[color="+get_ut_color("out_of_logic_glitched") + "]" +temp_name+"[/color]", True)
                             elif temp_loc.address in hints:
                                 ctx.log_to_tab("[color="+get_ut_color("hinted_glitched") + "]" +temp_name+"[/color]", True)
+                                hinted_locations.append(temp_loc)
                             else:
                                 ctx.log_to_tab("[color="+get_ut_color("glitched") + "]" +temp_name+"[/color]", True)
                             readable_locations.append(temp_name)
@@ -1294,7 +1299,7 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
     if hasattr(ctx, "tracker_glitched_locs_label"):
         ctx.tracker_glitched_locs_label.text = f"Glitched: [color={get_ut_color("glitched")}]{len(glitches_locations)}[/color]"
     if hasattr(ctx, "tracker_hinted_locs_label"):
-        ctx.tracker_hinted_locs_label.text = f"Hinted: [color={get_ut_color("hinted")}]{len(hints)}[/color]"
+        ctx.tracker_hinted_locs_label.text = f"Hinted: [color={get_ut_color("hinted_in_logic")}]{len(hinted_locations)}[/color]"
 
     return CurrentTrackerState(all_items, prog_items, glitches_locations, events, state)
 
