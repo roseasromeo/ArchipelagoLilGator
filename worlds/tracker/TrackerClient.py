@@ -608,8 +608,10 @@ class TrackerGameContext(CommonContext):
             tracker_divider = MDDivider(size_hint_y=None, height=dp(1))
             self.tracker_total_locs_label = MDLabel(text="Locations: 0/0", halign="center")
             self.tracker_logic_locs_label = MDLabel(text="In Logic: 0", halign="center")
-            self.tracker_glitched_locs_label = MDLabel(text="Glitched: 0",  halign="center")
-            self.tracker_hinted_locs_label = MDLabel(text="Hinted: 0", halign="center")
+            self.tracker_glitched_locs_label = MDLabel(text=f"Glitched: [color={get_ut_color("glitched")}]0[/color]",  halign="center")
+            self.tracker_hinted_locs_label = MDLabel(text=f"Hinted: [color={get_ut_color("hinted")}]0[/color]", halign="center")
+            self.tracker_glitched_locs_label.markup = True
+            self.tracker_hinted_locs_label.markup = True
             tracker_header.add_widget(self.tracker_total_locs_label)
             tracker_header.add_widget(self.tracker_logic_locs_label)
             tracker_header.add_widget(self.tracker_glitched_locs_label)
