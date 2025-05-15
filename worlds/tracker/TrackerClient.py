@@ -919,6 +919,14 @@ class TrackerGameContext(CommonContext):
             self.ignored_locations.clear()
             self.location_alias_map = {}
             self.set_page("Connect to a slot to start tracking!")
+            if hasattr(self, "tracker_total_locs_label"):
+                self.tracker_total_locs_label.text = f"Locations: 0/0"
+            if hasattr(self, "tracker_logic_locs_label"):
+                self.tracker_logic_locs_label.text = f"In Logic: 0"
+            if hasattr(self, "tracker_glitched_locs_label"):
+                self.tracker_glitched_locs_label.text = f"Glitched: [color={get_ut_color("glitched")}]0[/color]"
+            if hasattr(self, "tracker_hinted_locs_label"):
+                self.tracker_hinted_locs_label.text = f"Hinted: [color={get_ut_color("hinted")}]0[/color]"
         self.local_items.clear()
 
         await super().disconnect(allow_autoreconnect)
@@ -1282,9 +1290,9 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
     if hasattr(ctx, "tracker_logic_locs_label"):
         ctx.tracker_logic_locs_label.text = f"In Logic: {len(locations)}"
     if hasattr(ctx, "tracker_glitched_locs_label"):
-        ctx.tracker_glitched_locs_label.text = f"Glitched: {len(glitches_locations)}"
+        ctx.tracker_glitched_locs_label.text = f"Glitched: [color={get_ut_color("glitched")}]{len(glitches_locations)}[/color]"
     if hasattr(ctx, "tracker_hinted_locs_label"):
-        ctx.tracker_hinted_locs_label.text = f"Hinted: {len(hints)}"
+        ctx.tracker_hinted_locs_label.text = f"Hinted: [color={get_ut_color("hinted")}]{len(hints)}[/color]"
 
     return CurrentTrackerState(all_items, prog_items, glitches_locations, events, state)
 
