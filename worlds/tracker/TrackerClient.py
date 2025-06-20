@@ -13,6 +13,7 @@ from typing import Union, Any, TYPE_CHECKING
 
 from BaseClasses import CollectionState, MultiWorld, LocationProgressType, ItemClassification
 from worlds.generic.Rules import exclusion_rules
+from Options import PerGameCommonOptions
 from Utils import __version__, output_path, open_filename
 from worlds import AutoWorld
 from worlds.tracker import TrackerWorld, UTMapTabData, CurrentTrackerState
@@ -258,6 +259,7 @@ class TrackerGameContext(CommonContext):
         self.location_icon = None
         self.root_pack_path = None
         self.map_id = None
+        self.common_option_overrides = {}
 
     def load_pack(self):
         self.maps = []
@@ -950,11 +952,31 @@ class TrackerGameContext(CommonContext):
             """
             player = {name: i for i, name in args.name.items()}[slot_name]
             if player == 1:
+                if slot_name in self.common_option_overrides:
+                    vars(args).update({
+                        option_name: {player: option_value}
+                        for option_name, option_value in self.common_option_overrides[slot_name].items()
+                    })
                 return args
             for option_name, option_value in args._get_kwargs():
                 if isinstance(option_value, dict) and player in option_value:
-                    setattr(args, option_name, {1: option_value[player]})
+                    set_value = self.common_option_overrides.get(slot_name, {}).get(option_name, False) or option_value[player]
+                    setattr(args, option_name, {1: set_value})
             return args
+
+        def stash_generic_options(args: dict[str, dict[int, Any]]) -> None:
+            ap_slots = {slot: args["name"][slot] for slot, game in args["game"].items() if game == "Archipelago"}
+            override_dict = {
+                option_name: {slot: option_class.from_any(option_class.default) for slot in ap_slots.keys()}
+                for option_name, option_class in PerGameCommonOptions.type_hints.items()
+            }
+            per_player_overrides = {
+                slot_name: {option_name: args[option_name][slot] for option_name in override_dict.keys()}
+                for slot, slot_name in ap_slots.items()
+            }
+            self.common_option_overrides.update(per_player_overrides)
+            for option_name, player_mapping in override_dict.items():
+                args[option_name].update(player_mapping)
 
         try:
             yaml_path, self.output_format, self.hide_excluded, self.use_split = self._set_host_settings()
@@ -997,7 +1019,8 @@ class TrackerGameContext(CommonContext):
                     slot: game if game not in REGEN_WORLDS else "Archipelago"
                     for slot, game in g_args.game.items()
                     }
-                # TODO empty out generic options for slots we moved to "Archipelago"
+
+                stash_generic_options(vars(g_args))
                 self.launch_multiworld = self.TMain(g_args, seed)
                 self.multiworld = self.launch_multiworld
 
