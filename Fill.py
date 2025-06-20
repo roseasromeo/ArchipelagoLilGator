@@ -75,11 +75,9 @@ def fill_restrictive(multiworld: MultiWorld, base_state: CollectionState, locati
                 items_to_place.append(reachable_items[next_player].pop())
 
         for item in items_to_place:
-            # The items added into `reachable_items` are placed starting from the end of each deque in
-            # `reachable_items`, so the items being placed are more likely to be found towards the end of `item_pool`.
-            for p, pool_item in enumerate(reversed(item_pool), start=1):
+            for p, pool_item in enumerate(item_pool):
                 if pool_item is item:
-                    del item_pool[-p]
+                    item_pool.pop(p)
                     break
 
         maximum_exploration_state = sweep_from_pool(

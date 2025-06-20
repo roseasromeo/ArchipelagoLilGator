@@ -20,7 +20,7 @@ class ShippingLogicMixin(BaseLogicMixin):
         self.shipping = ShippingLogic(*args, **kwargs)
 
 
-class ShippingLogic(BaseLogic):
+class ShippingLogic(BaseLogic[Union[ReceivedLogicMixin, ShippingLogicMixin, BuildingLogicMixin, RegionLogicMixin, HasLogicMixin]]):
 
     @cached_property
     def can_use_shipping_bin(self) -> StardewRule:

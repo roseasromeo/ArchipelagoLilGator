@@ -2,7 +2,7 @@ from .base_logic import BaseLogic
 from ..stardew_rule import StardewRule, And, Or, Has, Count, true_, false_, HasProgressionPercent
 
 
-class HasLogicMixin(BaseLogic):
+class HasLogicMixin(BaseLogic[None]):
     true_ = true_
     false_ = false_
 

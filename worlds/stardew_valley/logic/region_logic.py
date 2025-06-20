@@ -29,7 +29,7 @@ class RegionLogicMixin(BaseLogicMixin):
         self.region = RegionLogic(*args, **kwargs)
 
 
-class RegionLogic(BaseLogic):
+class RegionLogic(BaseLogic[Union[RegionLogicMixin, HasLogicMixin]]):
 
     @cache_self1
     def can_reach(self, region_name: str) -> StardewRule:

@@ -1,4 +1,3 @@
-from typing import Callable
 import unittest
 from enum import IntEnum
 
@@ -35,7 +34,7 @@ def generate_entrance_pair(region: Region, name_suffix: str, group: int):
 
 
 def generate_disconnected_region_grid(multiworld: MultiWorld, grid_side_length: int, region_size: int = 0,
-                                      region_creator: Callable[[str, int, MultiWorld], Region] = Region):
+                                      region_type: type[Region] = Region):
     """
     Generates a grid-like region structure for ER testing, where menu is connected to the top-left region, and each
     region "in vanilla" has 2 2-way exits going either down or to the right, until reaching the goal region in the
@@ -45,7 +44,7 @@ def generate_disconnected_region_grid(multiworld: MultiWorld, grid_side_length: 
         for col in range(grid_side_length):
             index = row * grid_side_length + col
             name = f"region{index}"
-            region = region_creator(name, 1, multiworld)
+            region = region_type(name, 1, multiworld)
             multiworld.regions.append(region)
             generate_locations(region_size, 1, region=region, tag=f"_{name}")
 
@@ -466,7 +465,7 @@ class TestRandomizeEntrances(unittest.TestCase):
             entrance_type = CustomEntrance
 
         multiworld = generate_test_multiworld()
-        generate_disconnected_region_grid(multiworld, 5, region_creator=CustomRegion)
+        generate_disconnected_region_grid(multiworld, 5, region_type=CustomRegion)
 
         self.assertRaises(EntranceRandomizationError, randomize_entrances, multiworld.worlds[1], False,
                           directionally_matched_group_lookup)

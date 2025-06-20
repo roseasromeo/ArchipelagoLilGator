@@ -1,11 +1,11 @@
 """
 Archipelago Launcher
 
-* If run with a patch file as argument, launch corresponding client with the patch file as an argument.
-* If run with component name as argument, run it passing argv[2:] as arguments.
-* If run without arguments or unknown arguments, open launcher GUI.
+* if run with APBP as argument, launch corresponding client.
+* if run with executable as argument, run it passing argv[2:] as arguments
+* if run without arguments, open launcher GUI
 
-Additional components can be added to worlds.LauncherComponents.components.
+Scroll down to components= to add components to the launcher as well as setup.py
 """
 
 import argparse
@@ -240,11 +240,10 @@ def run_gui(path: str, args: Any) -> None:
     from kivy.properties import ObjectProperty
     from kivy.core.window import Window
     from kivy.metrics import dp
-    from kivymd.uix.button import MDIconButton, MDButton
+    from kivymd.uix.button import MDIconButton
     from kivymd.uix.card import MDCard
     from kivymd.uix.menu import MDDropdownMenu
     from kivymd.uix.snackbar import MDSnackbar, MDSnackbarText
-    from kivymd.uix.textfield import MDTextField
 
     from kivy.lang.builder import Builder
 
@@ -264,7 +263,6 @@ def run_gui(path: str, args: Any) -> None:
         navigation: MDGridLayout = ObjectProperty(None)
         grid: MDGridLayout = ObjectProperty(None)
         button_layout: ScrollBox = ObjectProperty(None)
-        search_box: MDTextField = ObjectProperty(None)
         cards: list[LauncherCard]
         current_filter: Sequence[str | Type] | None
 
@@ -350,22 +348,8 @@ def run_gui(path: str, args: Any) -> None:
             scroll_percent = self.button_layout.convert_distance_to_scroll(0, top)
             self.button_layout.scroll_y = max(0, min(1, scroll_percent[1]))
 
-        def filter_clients_by_type(self, caller: MDButton):
+        def filter_clients(self, caller):
             self._refresh_components(caller.type)
-            self.search_box.text = ""
-
-        def filter_clients_by_name(self, caller: MDTextField, name: str) -> None:
-            if len(name) == 0:
-                self._refresh_components(self.current_filter)
-                return
-
-            sub_matches = [
-                card for card in self.cards
-                if name.lower() in card.component.display_name.lower() and card.component.type != Type.HIDDEN
-            ]
-            self.button_layout.layout.clear_widgets()
-            for card in sub_matches:
-                self.button_layout.layout.add_widget(card)
 
         def build(self):
             from kvui import MDButton, MDButtonIcon, MDButtonText
@@ -375,7 +359,6 @@ def run_gui(path: str, args: Any) -> None:
             self.grid = self.top_screen.ids.grid
             self.navigation = self.top_screen.ids.navigation
             self.button_layout = self.top_screen.ids.button_layout
-            self.search_box = self.top_screen.ids.search_box
             self.set_colors()
             self.top_screen.md_bg_color = self.theme_cls.backgroundColor
 
@@ -422,17 +405,11 @@ def run_gui(path: str, args: Any) -> None:
             refresh_components = self._refresh_components
 
             Window.bind(on_drop_file=self._on_drop_file)
-            Window.bind(on_keyboard=self._on_keyboard)
 
             for component in components:
                 self.cards.append(self.build_card(component))
 
             self._refresh_components(self.current_filter)
-
-            # Uncomment to re-enable the Kivy console/live editor
-            # Ctrl-E to enable it, make sure numlock/capslock is disabled
-            # from kivy.modules.console import create_console
-            # create_console(Window, self.top_screen)
 
             return self.top_screen
 
@@ -458,15 +435,6 @@ def run_gui(path: str, args: Any) -> None:
                 run_component(component, file)
             else:
                 logging.warning(f"unable to identify component for {file}")
-
-        def _on_keyboard(self, window: Window, key: int, scancode: int, codepoint: str, modifier: list[str]):
-            # Activate search as soon as we start typing, no matter if we are focused on the search box or not.
-            # Focus first, then capture the first character we type, otherwise it gets swallowed and lost.
-            # Limit text input to ASCII non-control characters (space bar to tilde).
-            if not self.search_box.focus:
-                self.search_box.focus = True
-                if key in range(32, 126):
-                    self.search_box.text += codepoint
 
         def _stop(self, *largs):
             # ran into what appears to be https://groups.google.com/g/kivy-users/c/saWDLoYCSZ4 with PyCharm.
