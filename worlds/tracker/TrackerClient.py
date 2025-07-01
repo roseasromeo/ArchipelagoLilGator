@@ -1142,10 +1142,10 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
 
     item_id_to_name = ctx.multiworld.worlds[ctx.player_id].item_id_to_name
     location_id_to_name = ctx.multiworld.worlds[ctx.player_id].location_id_to_name
-    for item_name, item_flags, item_loc in [(item_id_to_name[item.item],item.flags,item.location) for item in ctx.tracker_items_received] + [(name,ItemClassification.progression,-1) for name in ctx.manual_items]:
+    for item_name, item_flags, item_loc, item_player in [(item_id_to_name[item.item],item.flags,item.location, item.player) for item in ctx.tracker_items_received] + [(name,ItemClassification.progression,-1,-1) for name in ctx.manual_items]:
         try:
             world_item = ctx.multiworld.create_item(item_name, ctx.player_id)
-            if item_loc>0 and item_loc in location_id_to_name:
+            if item_loc>0 and item_player == ctx.slot and item_loc in location_id_to_name:
                 world_item.location = ctx.multiworld.get_location(location_id_to_name[item_loc],ctx.player_id)
             world_item.classification = world_item.classification | item_flags
             state.collect(world_item, True)
