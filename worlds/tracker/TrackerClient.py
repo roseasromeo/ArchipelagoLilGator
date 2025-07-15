@@ -608,8 +608,8 @@ class TrackerGameContext(CommonContext):
             tracker_divider = MDDivider(size_hint_y=None, height=dp(1))
             self.tracker_total_locs_label = MDLabel(text="Locations: 0/0", halign="center")
             self.tracker_logic_locs_label = MDLabel(text="In Logic: 0", halign="center")
-            self.tracker_glitched_locs_label = MDLabel(text=f"Glitched: [color={get_ut_color("glitched")}]0[/color]",  halign="center")
-            self.tracker_hinted_locs_label = MDLabel(text=f"Hinted: [color={get_ut_color("hinted_in_logic")}]0[/color]", halign="center")
+            self.tracker_glitched_locs_label = MDLabel(text=f"Glitched: [color={get_ut_color('glitched')}]0[/color]",  halign="center")
+            self.tracker_hinted_locs_label = MDLabel(text=f"Hinted: [color={get_ut_color('hinted_in_logic')}]0[/color]", halign="center")
             self.tracker_glitched_locs_label.markup = True
             self.tracker_hinted_locs_label.markup = True
             tracker_header.add_widget(self.tracker_total_locs_label)
@@ -765,7 +765,10 @@ class TrackerGameContext(CommonContext):
             if cmd == 'Connected':
                 self.game = args["slot_info"][str(args["slot"])][1]
                 slot_name = args["slot_info"][str(args["slot"])][0]
-                connected_cls = AutoWorld.AutoWorldRegister.world_types[self.game]
+                connected_cls = AutoWorld.AutoWorldRegister.world_types.get(self.game)
+                if connected_cls is None:
+                    self.log_to_tab(f"Connected to World {self.game} but that world is not installed")
+                    return
                 if getattr(connected_cls, "disable_ut", False):
                     self.log_to_tab("World Author has requested UT be disabled on this world, please respect their decision")
                     return
@@ -856,7 +859,7 @@ class TrackerGameContext(CommonContext):
                     self.scout_checked_locations()
                 updateTracker(self)
             elif cmd == 'SetReply' or cmd == 'Retrieved':
-                if self.ui is not None and hasattr(AutoWorld.AutoWorldRegister.world_types[self.game], "tracker_world") and self.tracker_world:
+                if self.ui is not None and hasattr(AutoWorld.AutoWorldRegister.world_types.get(self.game), "tracker_world") and self.tracker_world:
                     key = self.tracker_world.map_page_setting_key or f"{self.slot}_{self.team}_{UT_MAP_TAB_KEY}"
                     icon_key = self.tracker_world.location_setting_key
                     if "key" in args:
@@ -923,9 +926,9 @@ class TrackerGameContext(CommonContext):
             if hasattr(self, "tracker_logic_locs_label"):
                 self.tracker_logic_locs_label.text = f"In Logic: 0"
             if hasattr(self, "tracker_glitched_locs_label"):
-                self.tracker_glitched_locs_label.text = f"Glitched: [color={get_ut_color("glitched")}]0[/color]"
+                self.tracker_glitched_locs_label.text = f"Glitched: [color={get_ut_color('glitched')}]0[/color]"
             if hasattr(self, "tracker_hinted_locs_label"):
-                self.tracker_hinted_locs_label.text = f"Hinted: [color={get_ut_color("hinted_in_logic")}]0[/color]"
+                self.tracker_hinted_locs_label.text = f"Hinted: [color={get_ut_color('hinted_in_logic')}]0[/color]"
         self.local_items.clear()
 
         await super().disconnect(allow_autoreconnect)
@@ -1315,9 +1318,9 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
     if hasattr(ctx, "tracker_logic_locs_label"):
         ctx.tracker_logic_locs_label.text = f"In Logic: {len(locations)}"
     if hasattr(ctx, "tracker_glitched_locs_label"):
-        ctx.tracker_glitched_locs_label.text = f"Glitched: [color={get_ut_color("glitched")}]{len(glitches_locations)}[/color]"
+        ctx.tracker_glitched_locs_label.text = f"Glitched: [color={get_ut_color('glitched')}]{len(glitches_locations)}[/color]"
     if hasattr(ctx, "tracker_hinted_locs_label"):
-        ctx.tracker_hinted_locs_label.text = f"Hinted: [color={get_ut_color("hinted_in_logic")}]{len(hinted_locations)}[/color]"
+        ctx.tracker_hinted_locs_label.text = f"Hinted: [color={get_ut_color('hinted_in_logic')}]{len(hinted_locations)}[/color]"
 
     return CurrentTrackerState(all_items, prog_items, glitches_locations, events, state)
 
