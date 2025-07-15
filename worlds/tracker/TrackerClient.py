@@ -1095,41 +1095,57 @@ def get_logical_path(ctx: TrackerGameContext, dest_name: str):
         logger.error("Player YAML not installed or Generator failed")
         ctx.set_page(f"Check Player YAMLs for error; Tracker {UT_VERSION} for AP version {__version__}")
         return
-    dest_id = ctx.multiworld.worlds[ctx.player_id].location_name_to_id[dest_name]
-    if dest_id not in ctx.server_locations:
-        logger.error("Location not found")
-        return
-
-    state = updateTracker(ctx).state
-    location = ctx.multiworld.get_location(dest_name, ctx.player_id)
-    if location.can_reach(state):
-
-        # stolen from core
-        from BaseClasses import Region
-        from typing import Tuple, Iterator
-        from itertools import zip_longest
-
-        def flist_to_iter(path_value) -> Iterator[str]:
-            while path_value:
-                region_or_entrance, path_value = path_value
-                yield region_or_entrance
-
-        def get_path(state: CollectionState, region: Region) -> list[Union[Tuple[str, str], Tuple[str, None]]]:
-            reversed_path_as_flist = state.path.get(region, (str(region), None))
-            string_path_flat = reversed(list(map(str, flist_to_iter(reversed_path_as_flist))))
-            # Now we combine the flat string list into (region, exit) pairs
-            pathsiter = iter(string_path_flat)
-            pathpairs = zip_longest(pathsiter, pathsiter)
-            return list(pathpairs)
-
-        paths = get_path(state=state, region=location.parent_region)
-        for k, v in paths:
-            if v:
-                logger.info(v)
-
+    relevent_region = None
+    state = None
+    if dest_name in ctx.multiworld.worlds[ctx.player_id].location_name_to_id:
+        
+        dest_id = ctx.multiworld.worlds[ctx.player_id].location_name_to_id[dest_name]
+        if dest_id not in ctx.server_locations:
+            logger.error("Location not found")
+            return
+        location = ctx.multiworld.get_location(dest_name, ctx.player_id)
+        state = updateTracker(ctx).state
+        if location.can_reach(state):
+            relevent_region = location.parent_region
+    elif dest_name in ctx.multiworld.regions.region_cache[ctx.player_id]:
+        relevent_region = ctx.multiworld.get_region(dest_name,ctx.player_id)
+        state = updateTracker(ctx).state
+        if not relevent_region.can_reach(state):
+            relevent_region = None
+    elif dest_name in ctx.multiworld.regions.location_cache[ctx.player_id]:
+        location = ctx.multiworld.get_location(dest_name,ctx.player_id)
+        state = updateTracker(ctx).state
+        if location.can_reach(state):
+            relevent_region = location.parent_region
     else:
-        logger.info("Location not in logic")
+        logger.info(f"{dest_name} not found in the multiworld")
 
+    if state:
+        if relevent_region:
+            # stolen from core
+            from BaseClasses import Region
+            from typing import Tuple, Iterator
+            from itertools import zip_longest
+
+            def flist_to_iter(path_value) -> Iterator[str]:
+                while path_value:
+                    region_or_entrance, path_value = path_value
+                    yield region_or_entrance
+
+            def get_path(state: CollectionState, region: Region) -> list[Union[Tuple[str, str], Tuple[str, None]]]:
+                reversed_path_as_flist = state.path.get(region, (str(region), None))
+                string_path_flat = reversed(list(map(str, flist_to_iter(reversed_path_as_flist))))
+                # Now we combine the flat string list into (region, exit) pairs
+                pathsiter = iter(string_path_flat)
+                pathpairs = zip_longest(pathsiter, pathsiter)
+                return list(pathpairs)
+
+            paths = get_path(state=state, region=relevent_region)
+            for k, v in paths:
+                if v:
+                    logger.info(v)
+        else:
+            logger.info(f"{dest_name} not in logic")
 
 def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
     if ctx.player_id is None or ctx.multiworld is None:
