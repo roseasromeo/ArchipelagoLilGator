@@ -55,7 +55,8 @@ def get_ut_color(color: str):
         hinted_in_logic: ClassVar[str] = StringProperty("") 
         hinted_out_of_logic: ClassVar[str] = StringProperty("") 
         hinted_glitched: ClassVar[str] = StringProperty("") 
-        excluded: ClassVar[str] = StringProperty("") 
+        excluded: ClassVar[str] = StringProperty("")
+        unconnected: ClassVar[str] = StringProperty("") 
     if not hasattr(get_ut_color,"utTextColor"):
         get_ut_color.utTextColor = UTTextColor()
     return str(getattr(get_ut_color.utTextColor,color,"DD00FF"))
@@ -260,6 +261,8 @@ class TrackerGameContext(CommonContext):
         self.root_pack_path = None
         self.map_id = None
         self.common_option_overrides = {}
+        self.defered_entrance_datastorage_keys = []
+        self.defered_entrance_callback = None
 
     def load_pack(self):
         self.maps = []
@@ -843,6 +846,18 @@ class TrackerGameContext(CommonContext):
                         self.command_processor.commands["load_map"] = cmd_load_map
                     if "list_maps" not in self.command_processor.commands or not self.command_processor.commands["list_maps"]:
                         self.command_processor.commands["list_maps"] = cmd_list_maps
+                self.defered_entrance_datastorage_keys = getattr(self.multiworld.worlds[self.player_id],"found_entrances_datastorage_key",None])
+                if self.defered_entrance_datastorage_keys:
+                    if isinstance(self.defered_entrance_datastorage_keys,str):
+                        self.defered_entrance_datastorage_keys = [self.defered_entrance_datastorage_keys]
+                    self.defered_entrance_callback = getattr(self.multiworld.worlds[self.player_id],"reconnect_found_entrances",None)
+                    if not self.defered_entrance_callback or not callable(self.defered_entrance_callback):
+                        self.defered_entrance_callback = None
+                        self.defered_entrance_datastorage_keys = []
+                    else:
+                        self.set_notify(*self.defered_entrance_datastorage_keys)
+                else:
+                    self.defered_entrance_datastorage_keys = []
 
                 if not (self.items_handling & 0b010):
                     self.scout_checked_locations()
@@ -868,6 +883,8 @@ class TrackerGameContext(CommonContext):
                             updateTracker(self)
                         elif args["key"] == icon_key:
                             self.update_location_icon_coords()
+                        elif args["key"] in self.defered_entrance_datastorage_keys:
+                            self.update_defered_entrances(args["key"])
                     elif "keys" in args:
                         if icon_key in args["keys"]:
                             self.update_location_icon_coords()
@@ -893,9 +910,12 @@ class TrackerGameContext(CommonContext):
                 self.location_icon.size = (self.ui.loc_icon_size, self.ui.loc_icon_size)
                 self.location_icon.pos = (x,y)
 
+    def update_defered_entrances(self,key):
+        if self.defered_entrance_callback and key:
+            self.defered_entrance_callback(key,self.stored_data.get(key,None))
 
     def write_empty_yaml(self, game, player_name, tempdir):
-        path = os.path.join(tempdir, f'{game}_{player_name}.yaml')
+        path = os.path.join(tempdir, f'yamlless_yaml.yaml')
         with open(path, 'w') as f:
             f.write('name: ' + player_name + '\n')
             f.write('game: ' + game + '\n')
@@ -916,6 +936,8 @@ class TrackerGameContext(CommonContext):
                 self.root_pack_path = None
             self.tracker_world = None
             self.multiworld = None
+            self.defered_entrance_callback = None
+            self.defered_entrance_datastorage_keys = []
             # TODO: persist these per url+slot(+seed)?
             self.manual_items.clear()
             self.ignored_locations.clear()
@@ -1063,7 +1085,7 @@ class TrackerGameContext(CommonContext):
         multiworld.game = args.game.copy()
         multiworld.player_name = args.name.copy()
         multiworld.set_options(args)
-        multiworld.state = CollectionState(multiworld)
+        multiworld.state = CollectionState(multiworld,True)
 
         for step in gen_steps:
             AutoWorld.call_all(multiworld, step)
@@ -1153,7 +1175,7 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
         ctx.set_page(f"Check Player YAMLs for error; Tracker {UT_VERSION} for AP version {__version__}")
         return
 
-    state = CollectionState(ctx.multiworld)
+    state = CollectionState(ctx.multiworld,True)
     prog_items = Counter()
     all_items = Counter()
 
@@ -1232,6 +1254,8 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
             ctx.log_to_tab("ERROR: location " + temp_loc.name + " broke something, report this to discord")
             pass
     events = [location.item.name for location in state.advancements if location.player == ctx.player_id]
+
+    unconnected_entrances = [entrance for region in state.reachable_regions[ctx.player_id] for entrance in region.exits if entrance.can_reach(state) and entrance.connected_region is None]
 
     ctx.locations_available = locations
     glitches_item_name = getattr(ctx.multiworld.worlds[ctx.player_id],"glitches_item_name","")
@@ -1320,6 +1344,8 @@ def updateTracker(ctx: TrackerGameContext) -> CurrentTrackerState:
                 status = "hinted_"+status
             for coord in relevent_coords:
                 coord.update_status(location, status)
+    for entrance in unconnected_entrances:
+        ctx.log_to_tab("[color="+get_ut_color("unconnected")+"]"+entrance.name+"[/color]",False) #keep these at the bottom
     if ctx.quit_after_update:
         name = ctx.player_names[ctx.slot]
         if ctx.print_count:
