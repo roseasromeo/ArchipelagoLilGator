@@ -846,10 +846,11 @@ class TrackerGameContext(CommonContext):
                         self.command_processor.commands["load_map"] = cmd_load_map
                     if "list_maps" not in self.command_processor.commands or not self.command_processor.commands["list_maps"]:
                         self.command_processor.commands["list_maps"] = cmd_list_maps
-                self.defered_entrance_datastorage_keys = getattr(self.multiworld.worlds[self.player_id],"found_entrances_datastorage_key",None])
+                self.defered_entrance_datastorage_keys = getattr(self.multiworld.worlds[self.player_id],"found_entrances_datastorage_key",None)
                 if self.defered_entrance_datastorage_keys:
                     if isinstance(self.defered_entrance_datastorage_keys,str):
                         self.defered_entrance_datastorage_keys = [self.defered_entrance_datastorage_keys]
+                    self.defered_entrance_datastorage_keys = [key.format(player=self.player_id, team=self.team) for key in self.defered_entrance_datastorage_keys]
                     self.defered_entrance_callback = getattr(self.multiworld.worlds[self.player_id],"reconnect_found_entrances",None)
                     if not self.defered_entrance_callback or not callable(self.defered_entrance_callback):
                         self.defered_entrance_callback = None
