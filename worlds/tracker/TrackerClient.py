@@ -889,6 +889,9 @@ class TrackerGameContext(CommonContext):
                     elif "keys" in args:
                         if icon_key in args["keys"]:
                             self.update_location_icon_coords()
+                        for key in self.defered_entrance_datastorage_keys:
+                            if key in args["keys"]:
+                                self.update_defered_entrances(key)
             elif cmd == 'LocationInfo':
                 if not (self.items_handling & 0b010):
                     self.update_tracker_items()
@@ -914,6 +917,7 @@ class TrackerGameContext(CommonContext):
     def update_defered_entrances(self,key):
         if self.defered_entrance_callback and key:
             self.defered_entrance_callback(key,self.stored_data.get(key,None))
+            updateTracker(self)
 
     def write_empty_yaml(self, game, player_name, tempdir):
         path = os.path.join(tempdir, f'yamlless_yaml.yaml')
