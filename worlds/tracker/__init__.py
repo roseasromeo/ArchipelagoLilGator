@@ -2,7 +2,7 @@ from worlds.LauncherComponents import Component, components, Type, launch_subpro
 from settings import Group, Bool, UserFolderPath, _world_settings_name_cache
 from typing import Any, ClassVar, NamedTuple, Callable
 from worlds.AutoWorld import World
-from BaseClasses import CollectionState
+from BaseClasses import CollectionState,Entrance
 from collections import Counter
 
 
@@ -11,12 +11,18 @@ def launch_client(*args):
     from .TrackerClient import launch as TCMain
     launch(TCMain, name="Universal Tracker client", args=args)
 
+UT_VERSION = "v0.2.12 UNSTABLE2"
 
 class CurrentTrackerState(NamedTuple):
     all_items: Counter
     prog_items: Counter
-    glitched_items: Counter
+    glitched_locations: list[str]
     events: list[str]
+    in_logic_locations: list[str]
+    in_logic_regions: list[str]
+    unconnected_entrances: list[Entrance]
+    readable_locations: list[str]
+    hinted_locations: list
     state: CollectionState
 
 
