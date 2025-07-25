@@ -4,14 +4,14 @@ from typing import Any, ClassVar, NamedTuple, Callable
 from worlds.AutoWorld import World
 from BaseClasses import CollectionState,Entrance
 from collections import Counter
-
+from enum import Enum
 
 def launch_client(*args):
     from worlds.LauncherComponents import launch
     from .TrackerClient import launch as TCMain
     launch(TCMain, name="Universal Tracker client", args=args)
 
-UT_VERSION = "v0.2.12 UNSTABLE2.1"
+UT_VERSION = "v0.2.12 UNSTABLE2.2"
 
 class CurrentTrackerState(NamedTuple):
     all_items: Counter
@@ -25,6 +25,10 @@ class CurrentTrackerState(NamedTuple):
     hinted_locations: list
     state: CollectionState
 
+class DeferredEntranceMode(Enum):
+    forced = "on"
+    default = "default"
+    disabled = "off"
 
 class TrackerSettings(Group):
     class TrackerPlayersPath(UserFolderPath):

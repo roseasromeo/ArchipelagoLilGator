@@ -321,10 +321,10 @@ class TrackerGameContext(CommonContext):
         assert self.tracker_world is not None
         current_world = self.tracker_core.get_current_world()
         assert current_world
-        assert current_world.settings
         self.maps = []
         self.locs = []
         if self.tracker_world.external_pack_key:
+            assert current_world.settings
             try:
                 from zipfile import is_zipfile
                 packRef = current_world.settings[self.tracker_world.external_pack_key]
@@ -621,20 +621,21 @@ class TrackerGameContext(CommonContext):
 
             @staticmethod
             def update_color(self, locationDict):
-                glitches = any(status.endswith("glitched") for status in locationDict.values())
-                in_logic = any(status.endswith("in_logic") for status in locationDict.values())
-                out_of_logic = any(status.endswith("out_of_logic") for status in locationDict.values())
-                hinted = any(status.startswith("hinted") for status in locationDict.values())
+                #glitches = any(status.endswith("glitched") for status in locationDict.values())
 
-                color_list = []
-                if in_logic:
-                    color_list.append("in_logic")
-                if out_of_logic:
-                    color_list.append("out_of_logic")
-                if glitches:
-                    color_list.append("glitched")
-                if hinted:
-                    color_list.append("hinted")
+                color_list = Counter()
+                def sort_status(pair) -> float:
+                    if pair[0] == "out_of_logic": return 0
+                    if pair[0] == "in_logic": return 999999999
+                    if pair[0] == "hinted_in_logic": return 8888888
+                    return pair[1] + (ord(pair[0][0])/10)
+
+                for status in locationDict.values():
+                    if status == "collected": #ignore collected
+                        continue
+                    color_list[status] += 1
+
+                color_list = [k for k,v in sorted(color_list.items(),key=sort_status,reverse=True)]
                 if color_list:
                     color_list = (color_list * max(2, (4 // len(color_list))))[:4]
                     self.color_1="#"+get_ut_color(color_list[0])

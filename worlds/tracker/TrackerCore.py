@@ -8,7 +8,7 @@ from Options import PerGameCommonOptions
 from BaseClasses import CollectionState, MultiWorld, LocationProgressType, ItemClassification
 from worlds import AutoWorld
 from collections import Counter, defaultdict
-from . import TrackerWorld, UTMapTabData, CurrentTrackerState, UT_VERSION
+from . import TrackerWorld, UTMapTabData, CurrentTrackerState, UT_VERSION, DeferredEntranceMode
 import sys
 from Utils import __version__, output_path, open_filename
 
@@ -37,7 +37,7 @@ class TrackerCore():
         self.locations_available = []
         self.launch_multiworld = None
         self.multiworld = None
-        self.enforce_deferred_connections = None
+        self.enforce_deferred_connections = DeferredEntranceMode.default
         self.glitched_locations = []
         self.quit_after_update = print_list or print_count
         self.print_list = print_list
@@ -261,7 +261,7 @@ class TrackerCore():
         multiworld.game = args.game.copy()
         multiworld.player_name = args.name.copy()
         multiworld.set_options(args)
-        multiworld.state = CollectionState(multiworld,self.enforce_deferred_connections != False)
+        multiworld.state = CollectionState(multiworld,self.enforce_deferred_connections != DeferredEntranceMode.disabled)
 
         for step in gen_steps:
             AutoWorld.call_all(multiworld, step)
@@ -279,7 +279,7 @@ class TrackerCore():
             self.set_page(f"Check Player YAMLs for error; Tracker {UT_VERSION} for AP version {__version__}")
             return
 
-        state = CollectionState(self.multiworld,self.enforce_deferred_connections != False)
+        state = CollectionState(self.multiworld,self.enforce_deferred_connections != DeferredEntranceMode.disabled)
         prog_items = Counter()
         all_items = Counter()
 
