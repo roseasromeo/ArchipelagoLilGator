@@ -424,15 +424,14 @@ class TrackerCore():
         with open(path, 'w',encoding="utf-8") as f:
             f.write(json.dumps(yaml_out))
 
-    def initalize_tracker_core(self,connected_cls:type[AutoWorld.World],slot_name,raw_slot_data):
-        self.slot_name = slot_name
+    def initalize_tracker_core(self,connected_cls:type[AutoWorld.World],raw_slot_data):
         if getattr(connected_cls, "disable_ut", False):
             self.log_to_tab("World Author has requested UT be disabled on this world, please respect their decision")
             return
         # first check if we don't need a yaml
         if getattr(connected_cls, "ut_can_gen_without_yaml", False):
             with tempfile.TemporaryDirectory() as tempdir:
-                self.write_empty_yaml(self.game, slot_name, tempdir)
+                self.write_empty_yaml(self.game, self.slot_name, tempdir)
                 self.player_id = 1
                 slot_data = raw_slot_data
                 world = None
@@ -459,8 +458,8 @@ class TrackerCore():
                 self.log_to_tab("If this issue persists, reproduce with the debug launcher and post the error message to the discord channel", False)
                 return
 
-            if slot_name in self.launch_multiworld.world_name_lookup:
-                internal_id = self.launch_multiworld.world_name_lookup[slot_name]
+            if self.slot_name in self.launch_multiworld.world_name_lookup:
+                internal_id = self.launch_multiworld.world_name_lookup[self.slot_name]
                 if self.launch_multiworld.worlds[internal_id].game == self.game:
                     self.multiworld = self.launch_multiworld
                     self.player_id = internal_id
@@ -471,7 +470,7 @@ class TrackerCore():
                 else:
                     world_dict = {name: self.launch_multiworld.worlds[slot].game for name, slot in self.launch_multiworld.world_name_lookup.items()}
                     tb = f"Tried to match game '{self.game}'" + \
-                            f" to slot name '{slot_name}'" + \
+                            f" to slot name '{self.slot_name}'" + \
                             f" with known slots {world_dict}"
                     self.gen_error = tb
                     self.logger.error(tb)

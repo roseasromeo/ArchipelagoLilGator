@@ -815,22 +815,22 @@ class TrackerGameContext(CommonContext):
         await self.get_username()
         await self.send_connect(game="")
 
-    def run_generator(self, slot_data: dict | None = None, override_yaml_path: str | None = None):
-        self.tracker_core.set_slot_params(self.game,self.slot,self.slot_info[self.slot].name if (self.slot and self.slot in self.slot_info) else None ,self.team)
-        self.tracker_core.run_generator(slot_data,override_yaml_path)
+    def run_generator(self):
+        self.tracker_core.run_generator(None, None)
 
     def on_package(self, cmd: str, args: dict):
         try:
             if cmd == 'Connected':
-                self.tracker_core.game = self.game = args["slot_info"][str(args["slot"])][1]
+                self.game = args["slot_info"][str(args["slot"])][1]
                 slot_name = args["slot_info"][str(args["slot"])][0]
+                self.tracker_core.set_slot_params(self.game,self.slot,slot_name,self.team)
                 connected_cls = AutoWorld.AutoWorldRegister.world_types.get(self.game)
                 if connected_cls is None:
                     self.log_to_tab(f"Connected to World {self.game} but that world is not installed")
                     return
                 if self.checksums[self.game] != connected_cls.get_data_package_data()["checksum"]:
                     logger.warning("*****\nWarning: the local datapackage for the connected game does not match the server's datapackage\n*****")
-                self.tracker_core.initalize_tracker_core(connected_cls,slot_name,args["slot_data"])
+                self.tracker_core.initalize_tracker_core(connected_cls,args["slot_data"])
 
                 if self.ui is not None and hasattr(connected_cls, "tracker_world"):
                     self.tracker_world = UTMapTabData(self.slot, self.team, **connected_cls.tracker_world)
