@@ -11,7 +11,7 @@ from typing import Union, Any, TYPE_CHECKING
 
 from BaseClasses import CollectionState, MultiWorld, LocationProgressType, ItemClassification
 from worlds.generic.Rules import exclusion_rules
-from Utils import __version__, output_path, open_filename
+from Utils import __version__, output_path, open_filename,async_start
 from worlds import AutoWorld
 from . import TrackerWorld, UTMapTabData, CurrentTrackerState,UT_VERSION
 from .TrackerCore import TrackerCore
@@ -255,6 +255,7 @@ class TrackerGameContext(CommonContext):
         self.tracker_core.set_get_ut_color(get_ut_color)
 
     def updateTracker(self) -> CurrentTrackerState:
+        if self.disconnected_intentionally: return CurrentTrackerState.init_empty_state()
         self.tracker_core.set_missing_locations(self.missing_locations)
         self.tracker_core.set_items_received(self.tracker_items_received)
         hints = []
@@ -262,7 +263,12 @@ class TrackerGameContext(CommonContext):
             from NetUtils import HintStatus
             hints = [ hint["location"] for hint in self.stored_data[f"_read_hints_{self.team}_{self.slot}"] if hint["status"] != HintStatus.HINT_FOUND and self.slot_concerns_self(hint["finding_player"]) ]
         self.tracker_core.set_hints( hints)
-        updateTracker_ret = self.tracker_core.updateTracker()
+        try:
+            updateTracker_ret = self.tracker_core.updateTracker()
+        except Exception as e:
+            self.disconnected_intentionally = True
+            async_start(self.disconnect(False), name="disconnecting")
+            raise e
         if self.tracker_page:
             self.tracker_page.refresh_from_data()
         if self.update_callback is not None:
@@ -283,7 +289,7 @@ class TrackerGameContext(CommonContext):
                 relevent_coords = self.coord_dict.get(location, [])
                 
                 if location in self.checked_locations or location in self.tracker_core.ignored_locations:
-                    status = "completed"
+                    status = "collected"
                 elif location in self.tracker_core.locations_available:
                     status = "in_logic"
                 elif location in self.tracker_core.glitched_locations:
@@ -706,14 +712,13 @@ class TrackerGameContext(CommonContext):
         @staticmethod
         def set_map_tab(self, value, *args, map_content=map_content, test=[]):
             if value:
-                test.append(self.add_client_tab("Map Page", map_content))
-                # self.add_widget(map_content)
-                # self.carousel.add_widget(map_content)
-                # self._set_slides_attributes()
-                # self.on_size(self, self.size)
+                if not test:
+                    test.append(self.add_client_tab("Map Page", map_content))
             else:
                 if test:
-                    self.remove_client_tab(test.pop())
+                    map_tab = test.pop()
+                    map_tab.content.parent = None
+                    self.remove_client_tab(map_tab)
 
 
         manager.apply_property(show_map=BooleanProperty(True))
@@ -991,16 +996,19 @@ def get_logical_path(ctx: TrackerGameContext, dest_name: str):
             return
         location = ctx.tracker_core.multiworld.get_location(dest_name, ctx.tracker_core.player_id)
         state = ctx.updateTracker().state
+        if not state: return
         if location.can_reach(state):
             relevent_region = location.parent_region
     elif dest_name in ctx.tracker_core.multiworld.regions.region_cache[ctx.tracker_core.player_id]:
         relevent_region = ctx.tracker_core.multiworld.get_region(dest_name,ctx.tracker_core.player_id)
         state = ctx.updateTracker().state
+        if not state: return
         if not relevent_region.can_reach(state):
             relevent_region = None
     elif dest_name in ctx.tracker_core.multiworld.regions.location_cache[ctx.tracker_core.player_id]:
         location = ctx.tracker_core.multiworld.get_location(dest_name,ctx.tracker_core.player_id)
         state = ctx.updateTracker().state
+        if not state: return
         if location.can_reach(state):
             relevent_region = location.parent_region
     else:
@@ -1045,6 +1053,8 @@ async def game_watcher(ctx: TrackerGameContext) -> None:
         except Exception as e:
             tb = traceback.format_exc()
             print(tb)
+            logger.error("".join(traceback.format_exception_only(sys.exception())))
+            raise e
 
 async def wait_for_items(ctx: TrackerGameContext)-> None:
     try:

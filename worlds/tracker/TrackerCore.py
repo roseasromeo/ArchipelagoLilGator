@@ -277,7 +277,7 @@ class TrackerCore():
         if self.player_id is None or self.multiworld is None:
             self.logger.error("Player YAML not installed or Generator failed")
             self.set_page(f"Check Player YAMLs for error; Tracker {UT_VERSION} for AP version {__version__}")
-            return
+            return CurrentTrackerState.init_empty_state()
 
         state = CollectionState(self.multiworld,self.enforce_deferred_connections != DeferredEntranceMode.disabled)
         prog_items = Counter()
@@ -287,6 +287,14 @@ class TrackerCore():
 
         item_id_to_name = self.multiworld.worlds[self.player_id].item_id_to_name
         location_id_to_name = self.multiworld.worlds[self.player_id].location_id_to_name
+
+        invalid_items = [str(item.item) for item in self.tracker_items_received if item.item not in item_id_to_name]
+        if invalid_items:
+            print(invalid_items)
+            self.logger.error("Your datapackage is incorrect, please correct the apworld for "+str(self.game))
+            self.logger.error("The Following items are unknown [" + ",".join(invalid_items)+"]")
+            raise Exception("Your datapackage is incorrect, please correct the apworld for "+str(self.game))
+
         for item_name, item_flags, item_loc, item_player in [(item_id_to_name[item.item],item.flags,item.location, item.player) for item in self.tracker_items_received] + [(name,ItemClassification.progression,-1,-1) for name in self.manual_items]:
             try:
                 world_item = self.multiworld.create_item(item_name, self.player_id)
