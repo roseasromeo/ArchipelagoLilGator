@@ -1,5 +1,6 @@
 import dataclasses
-from typing import TYPE_CHECKING, Any, Iterable, override
+from typing import TYPE_CHECKING, Any, Iterable
+from typing_extensions import override
 
 from BaseClasses import CollectionState
 
