@@ -144,7 +144,7 @@ class TrackerCore():
         return tracker_settings['player_files_path'], report_type, tracker_settings[
             'hide_excluded_locations'], tracker_settings["use_split_map_icons"]
     
-    def run_generator(self, slot_data: dict | None = None, override_yaml_path: str | None = None):
+    def run_generator(self, slot_data: dict | None = None, override_yaml_path: str | None = None, super_override_yaml_path: str|None = None):
         def move_slots(args: "Namespace", slot_name: str):
             """
             helper function to copy all the proper option values into slot 1,
@@ -183,6 +183,8 @@ class TrackerCore():
             # strip command line args, they won't be useful from the client anyway
             sys.argv = sys.argv[:1]
             args = mystery_argparse()
+            if super_override_yaml_path:
+                args.player_files_path = super_override_yaml_path
             if override_yaml_path:
                 args.player_files_path = override_yaml_path
             elif yaml_path:
