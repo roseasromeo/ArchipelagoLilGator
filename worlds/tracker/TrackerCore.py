@@ -52,6 +52,7 @@ class TrackerCore():
         self.hints = []
         self.tracker_items_received = []
         self.manual_items = []
+        self.player_folder_override = None
 
         self.ignored_locations: set[int] = set()
         self.missing_locations: set[int] = set()
@@ -60,6 +61,7 @@ class TrackerCore():
         self.re_gen_passthrough = None
         self.multiworld = None
         self.manual_items.clear()
+        self.player_folder_override = None
 
     def set_set_page(self,set_page:Optional[Callable[[str],None]]):
         self._set_page = set_page
@@ -185,10 +187,13 @@ class TrackerCore():
             args = mystery_argparse()
             if super_override_yaml_path:
                 args.player_files_path = super_override_yaml_path
-            if override_yaml_path:
+            elif override_yaml_path:
                 args.player_files_path = override_yaml_path
+            elif self.player_folder_override:
+                args.player_files_path = self.player_folder_override
             elif yaml_path:
                 args.player_files_path = yaml_path
+            self.player_folder_override = args.player_files_path
             args.skip_output = True
 
             if self.quit_after_update:
