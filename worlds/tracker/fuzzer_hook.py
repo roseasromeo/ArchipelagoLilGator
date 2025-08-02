@@ -11,6 +11,7 @@ logger = logging.getLogger("Fuzzer")
 class Hook(BaseHook):
     ut_core:TrackerCore.TrackerCore
     player_files_path:str
+    status = None
 
     def before_generate(self, args):
         assert args.player_files_path, args.player_files_path
@@ -19,23 +20,32 @@ class Hook(BaseHook):
         self.ut_core.run_generator(None,None,args.player_files_path) #initial UT gen
         assert self.ut_core.multiworld, self.ut_core.gen_error
 
-    def after_generate(self, mw:MultiWorld):
-        self.status = GenOutcome.OptionError
+    def after_generate(self, mw:MultiWorld, output_path):
         if mw is None:
             return
         if len(mw.worlds)>1:
             return
         assert self.player_files_path
         self.status = GenOutcome.Success
+        import zipfile
+        with zipfile.ZipFile(output_path+"/AP_"+mw.seed_name+".zip") as zf:
+            for file in zf.namelist():
+                if file.endswith(".archipelago"):
+                    data = zf.read(file)
+                    break
+            else:
+                raise Exception("No .archipelago found in archive.")
+        from MultiServer import Context
+        temp = Context.decompress(data)
 
-        slot_data = mw.worlds[1].fill_slot_data() #slot 0 is reserved
+        slot_data = temp["slot_data"][1] #slot 0 is reserved
 
         self.ut_core.set_slot_params(mw.worlds[1].game,1,mw.player_name[1],1)
         self.ut_core.initalize_tracker_core(mw.worlds[1].__class__,slot_data)
         assert self.ut_core.multiworld, self.ut_core.gen_error
 
         remaining_locations = [location.address for location in mw.worlds[1].get_locations() if location.address is not None]
-        current_inventory = [NetworkItem(item.code,-2,item.player,item.classification) for item in mw.precollected_items[1]]
+        current_inventory = [NetworkItem(item.code,-2,item.player,item.classification) for item in mw.precollected_items[1] if item.code is not None]
 
         # Recalc spheres
         for sphere_number, sphere in enumerate(mw.get_sendable_spheres()):
