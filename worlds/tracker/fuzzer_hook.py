@@ -14,11 +14,9 @@ class Hook(BaseHook):
     status = None
 
     def before_generate(self, args):
-        assert args.player_files_path, args.player_files_path
         self.player_files_path = args.player_files_path
         self.ut_core = TrackerCore.TrackerCore(logger,False,False)
         self.ut_core.run_generator(None,None,args.player_files_path) #initial UT gen
-        assert self.ut_core.multiworld, self.ut_core.gen_error
 
     def after_generate(self, mw:MultiWorld, output_path):
         if mw is None:
@@ -58,6 +56,7 @@ class Hook(BaseHook):
                 self.ut_core.set_missing_locations(set(remaining_locations))
                 self.ut_core.set_items_received(current_inventory)
                 update_ret = self.ut_core.updateTracker()
+                missed_locations = []
                 for in_logic_location in update_ret.in_logic_locations:
                     if in_logic_location in current_sphere:
                         true_item = current_sphere[in_logic_location].item
@@ -65,13 +64,14 @@ class Hook(BaseHook):
                         remaining_locations.remove(current_sphere[in_logic_location].address)
                         del current_sphere[in_logic_location]
                     else:
-                        print(f"Location {in_logic_location} was expected to be in logic but wasn't")
-                        print(f"In sphere #{sphere_number}")
-                        self.status = GenOutcome.Failure
-                        return
+                        missed_locations.append(in_logic_location)
                 if len(current_sphere) > 0:
-                    print(f"Locations `{','.join(current_sphere.keys())}` were in logic but not expected")
-                    print(f"In logic sphere `{','.join(update_ret.in_logic_locations)}`")
+                    print(f"Locations `{','.join(current_sphere.keys())}` were in server logic but not expected in UT")
+                    print(f"UT logic sphere `{','.join(update_ret.in_logic_locations)}`")
+                if len(missed_locations) > 0:
+                    print(f"Locations {','.join(missed_locations)} were expected to be in logic but weren't")
+                    print(f"Server logic sphere `{','.join([location.name for location in sphere if location.address is not None])}`")
+                if len(current_sphere)>0 or len(missed_locations)>0:
                     print(f"In sphere #{sphere_number}")
                     self.status = GenOutcome.Failure
                     return
