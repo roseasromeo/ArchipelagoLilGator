@@ -271,6 +271,8 @@ class TrackerCore():
         multiworld.state = CollectionState(multiworld,self.enforce_deferred_connections != DeferredEntranceMode.disabled)
 
         for step in gen_steps:
+            if step == "create_items":
+                continue
             AutoWorld.call_all(multiworld, step)
             if step == "set_rules":
                 for player in multiworld.player_ids:
