@@ -170,6 +170,15 @@ class TrackerCommandProcessor(ClientCommandProcessor):
             return
         get_logical_path(self.ctx, location_name)
 
+    def _cmd_faris_asked(self):
+        """Print out the error message and any other information we think might be useful"""
+        print("We're in commands")
+        if self.ctx.tracker_core is not None:
+            logger.error(self.ctx.tracker_core.gen_error)
+            if self.ctx.tracker_core.launch_multiworld is not None:
+                known_slots = [f"{slot_name} ({self.ctx.tracker_core.launch_multiworld.worlds[slot_id].game})" for slot_name, slot_id in self.ctx.tracker_core.launch_multiworld.world_name_lookup.items() if self.ctx.tracker_core.launch_multiworld.worlds[slot_id].game != "Archipelago"]
+                logger.error(f"Known slots = [{', '.join(known_slots)}]")
+
 
 def cmd_load_map(self: TrackerCommandProcessor, map_id: str = "0"):
     """Force a poptracker map id to be loaded"""
@@ -269,6 +278,8 @@ class TrackerGameContext(CommonContext):
             self.disconnected_intentionally = True
             async_start(self.disconnect(False), name="disconnecting")
             raise e
+        if updateTracker_ret.state is None:
+            return updateTracker_ret # core.updateTracker failed, just pass it along
         if self.tracker_page:
             self.tracker_page.refresh_from_data()
         if self.update_callback is not None:
