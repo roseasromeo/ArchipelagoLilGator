@@ -1,7 +1,8 @@
 from typing import TYPE_CHECKING
-from .rule_builder_overrides import Has, HasAll, CanReachLocation
+from .rule_builder_overrides import Has, HasAll, CanReachLocation, CanReachRegion
 from .items import DeathsDoorItemName as I
 from .locations import DeathsDoorLocationName as L
+from .regions import DeathsDoorRegionName as R
 from .options import StartDayOrNight
 from .events import (
     DeathsDoorEventLocationName as EL,
@@ -38,12 +39,12 @@ pot_specific_rules: dict[EL, Rule["DeathsDoorWorld"]] = {
 
 
 deaths_door_event_rules: dict[EL, Rule["DeathsDoorWorld"] | None] = {
-    EL.VICTORY: CanReachLocation(L.RUSTY_BELLTOWER_KEY),  # TODO: Goals
+    EL.LORD_OF_DOORS: CanReachLocation(L.RUSTY_BELLTOWER_KEY),  # TODO: Goals
     EL.LOST_CEMETERY_OPENED_EXIT_TO_SAILOR: Has(I.FIRE),
     EL.ACCESS_TO_NIGHT: True_(options=[OptionFilter(StartDayOrNight, 1)])
-    | Has(I.RUSTY_BELLTOWER_KEY),
+    | (Has(I.RUSTY_BELLTOWER_KEY) & CanReachRegion(R.LOST_CEMETERY_BELLTOWER)),
     EL.ACCESS_TO_DAY: True_(options=[OptionFilter(StartDayOrNight, 0)])
-    | Has(I.RUSTY_BELLTOWER_KEY),
+    | (Has(I.RUSTY_BELLTOWER_KEY) & CanReachRegion(R.LOST_CEMETERY_BELLTOWER)),
     EL.GREY_CROW_BOSS: HasAll(
         I.GIANT_SOUL_OF_BETTY,
         I.GIANT_SOUL_OF_THE_FROG_KING,
@@ -62,16 +63,20 @@ deaths_door_event_rules: dict[EL, Rule["DeathsDoorWorld"] | None] = {
     EL.WATCHTOWER_FIRST_POT_TORCH: HasAll(
         I.FIRE, E.ACCESS_TO_NIGHT
     ),
-    EL.WATCHTOWER_BOOMERS_TORCH_1: HasAll(
+    EL.WATCHTOWER_BOOMERS_TORCH: HasAll(
         I.FIRE, E.ACCESS_TO_NIGHT
     ),
-    EL.WATCHTOWER_BOOMERS_TORCH_2: HasAll(
+    EL.WATCHTOWER_BEFORE_ICE_SKATING_TORCH: HasAll(
         I.FIRE, E.ACCESS_TO_NIGHT
     ),
     EL.MUSHROOM_DUNGEON_MAIN_GATE: HasAll(
         I.MAGICAL_FOREST_HORN, E.ACCESS_TO_DAY
     ),
     EL.RESCUE_GRUNT: Has(I.BOMB),
+    EL.CASTLE_LOCKSTONE_LORD_LOCKSTONE: Has(I.FIRE),
+    EL.CASTLE_LOCKSTONE_LORD_OPENGATE: Has(I.FIRE),
+    EL.CASTLE_LOCKSTONE_LORD_DEADBOLT: Has(I.FIRE),
+    EL.CASTLE_LOCKSTONE_LORD_THEODOOR: Has(I.FIRE),
 }
 
 # Add in pots to existing tables to be able to use the same infrastructure

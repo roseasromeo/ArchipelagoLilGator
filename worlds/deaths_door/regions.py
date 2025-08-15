@@ -80,6 +80,7 @@ class DeathsDoorRegionName(str, Enum):
     # Estate of Urn Witch Regions
     ESTATE_OF_THE_URN_WITCH_DOOR = "Estate of the Urn Witch Door"
     ESTATE_OF_THE_URN_WITCH_EXIT_TO_CRYPT = "Estate of the Urn Witch Exit to Crypt"
+    ESTATE_OF_THE_URN_WITCH_ENTRANCE = "Estate of the Urn Witch Entrance"
     ESTATE_OF_THE_URN_WITCH_SOUTH = "Estate of the Urn Witch South"
     ESTATE_OF_THE_URN_WITCH_NORTH = "Estate of the Urn Witch North"
     ESTATE_OF_THE_URN_WITCH_URN_SHED = "Estate of the Urn Witch Urn Shed"
@@ -170,6 +171,7 @@ class DeathsDoorRegionName(str, Enum):
     FLOODED_FORTRESS_ENTRANCE = "Flooded Fortress Entrance"
     FLOODED_FORTRESS_WATCHTOWER_LOWER = "Flooded Fortress Watchtower Lower"
     FLOODED_FORTRESS_FROG_KING_STATUE = "Flooded Fortress Frog King Statue"
+    FLOODED_FORTRESS_PRE_MAIN_GATE = "Flooded Fortress Pre-Main Gate"
     FLOODED_FORTRESS_FROG_KING_ENCOUNTER = "Flooded Fortress Frog King Encounter"
     FLOODED_FORTRESS_INSIDE_MAIN_GATE = "Flooded Fortress Inside Main Gate"
     FLOODED_FORTRESS_U_TURN = "Flooded Fortress U Turn"
@@ -222,18 +224,15 @@ class DeathsDoorRegionName(str, Enum):
     CASTLE_LOCKSTONE_EAST_UPPER = "Castle Lockstone East Upper"
     CASTLE_LOCKSTONE_EAST_UPPER_KEYED_DOOR = "Castle Lockstone East Upper Keyed Door"
     CASTLE_LOCKSTONE_JAILED_SEED = "Castle Lockstone Jailed Seed"
-    CASTLE_LOCKSTONE_LORD_THEODOOR_ROOM = (
-        "Castle Lockstone Lord Theodoor Room"  # Called Lamp in base rando
-    )
     CASTLE_LOCKSTONE_LIBRARY = "Castle Lockstone Library"
     CASTLE_LOCKSTONE_ROOF = "Castle Lockstone Roof"
     CASTLE_LOCKSTONE_EXIT_TO_CAMP = (
         "Castle Lockstone Exit to Camp of the Free Crows (via Roof)"
     )
-    CASTLE_LOCKSTONE_LORD_LOCKSTONE = "Castle Lockstone Lord Lockstone Light Lamp"
-    CASTLE_LOCKSTONE_LORD_OPENGATE = "Castle Lockstone Lord Opengate Light Lamp"
-    CASTLE_LOCKSTONE_LORD_DEADBOLT = "Castle Lockstone Lord Deadbolt Light Lamp"
-    CASTLE_LOCKSTONE_LORD_THEODOOR = "Castle Lockstone Lord Theodoor Light Lamp"
+    CASTLE_LOCKSTONE_LORD_LOCKSTONE = "Castle Lockstone Lord Lockstone's Grave"
+    CASTLE_LOCKSTONE_LORD_OPENGATE = "Castle Lockstone Lord Opengate's Grave"
+    CASTLE_LOCKSTONE_LORD_DEADBOLT = "Castle Lockstone Lord Deadbolt's Grave"
+    CASTLE_LOCKSTONE_LORD_THEODOOR = "Castle Lockstone Lord Theodoor's Grave"
     CASTLE_LOCKSTONE_EAST_CROW = "Castle Lockstone East Crow"
 
     # Camp of the Free Crows Regions
