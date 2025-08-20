@@ -197,7 +197,7 @@ class TrackerCore():
                 args.player_files_path = yaml_path
             self.player_folder_override = args.player_files_path
             args.skip_output = True
-
+            args.multi = 0
             if self.quit_after_update:
                 from logging import ERROR
                 args.log_level = ERROR
@@ -273,8 +273,6 @@ class TrackerCore():
         multiworld.state = CollectionState(multiworld,self.enforce_deferred_connections != DeferredEntranceMode.disabled)
 
         for step in gen_steps:
-            if step == "create_items":
-                continue
             AutoWorld.call_all(multiworld, step)
             if step == "set_rules":
                 for player in multiworld.player_ids:

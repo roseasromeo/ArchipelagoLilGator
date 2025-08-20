@@ -80,7 +80,7 @@ class Hook(BaseHook):
                     print(f"Locations {','.join(missed_locations)} were expected to be in logic but weren't")
                     print(f"Server logic sphere `{','.join([location.name for location in sphere if location.address is not None])}`")
                 if len(current_sphere)>0 or len(missed_locations)>0:
-                    print(f"In sphere #{sphere_number}")
+                    print(f"After sphere #{sphere_number}")
                     item_id_to_name = self.ut_core.multiworld.worlds[self.ut_core.player_id].item_id_to_name
                     print(f"New Inventory = [{','.join(new_inventory)}]")
                     print(f"Current Inventory = [{','.join([item_id_to_name[item.item] for item in current_inventory if item.flags & 1])}]")

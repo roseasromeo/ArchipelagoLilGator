@@ -848,7 +848,9 @@ class TrackerGameContext(CommonContext):
                 if self.checksums[self.game] != connected_cls.get_data_package_data()["checksum"]:
                     logger.warning("*****\nWarning: the local datapackage for the connected game does not match the server's datapackage\n*****")
                 self.tracker_core.initalize_tracker_core(connected_cls,args["slot_data"])
-
+                if not self.tracker_core.multiworld:
+                    logger.error("Internal generation failed, something has gone wrong")
+                    logger.error("Run the /faris_asked command and post the results in the discord")
                 if self.ui is not None and hasattr(connected_cls, "tracker_world"):
                     self.tracker_world = UTMapTabData(self.slot, self.team, **connected_cls.tracker_world)
                     self.load_pack()
@@ -1106,6 +1108,8 @@ def launch(*args):
 
     asyncio.run(main(args))
 
+def updateTracker(ctx: TrackerGameContext):
+    return ctx.updateTracker()
 
 if __name__ == "__main__":
     launch(*sys.argv[1:])
