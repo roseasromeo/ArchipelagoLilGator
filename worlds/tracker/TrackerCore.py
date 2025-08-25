@@ -499,3 +499,5 @@ class TrackerCore():
                 else:
                     self.logger.error(f"Player's Yaml not in tracker's list. All known players are Yaml-less")
                 return
+        if self.multiworld:
+            self.location_alias_map = getattr(self.multiworld.worlds[self.player_id],"location_id_to_alias",None)

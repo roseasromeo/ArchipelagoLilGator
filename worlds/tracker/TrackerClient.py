@@ -892,8 +892,6 @@ class TrackerGameContext(CommonContext):
                 if not (self.items_handling & 0b010):
                     self.scout_checked_locations()
 
-                if hasattr(connected_cls, "location_id_to_alias"):
-                    self.tracker_core.location_alias_map = connected_cls.location_id_to_alias
                 if not self.quit_after_update:
                     self.updateTracker()
                 else:
