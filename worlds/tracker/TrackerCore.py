@@ -64,6 +64,7 @@ class TrackerCore():
         self.multiworld = None
         self.manual_items.clear()
         self.player_folder_override = None
+        self.location_alias_map = {}
 
     def set_set_page(self,set_page:Optional[Callable[[str],None]]):
         self._set_page = set_page

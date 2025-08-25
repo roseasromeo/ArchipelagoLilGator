@@ -854,7 +854,10 @@ class TrackerGameContext(CommonContext):
             await super(TrackerGameContext, self).server_auth(password_requested)
 
         await self.get_username()
-        await self.send_connect(game="")
+        if "Tracker" in self.tags:
+            await self.send_connect(game="")
+        else:
+            await self.send_connect()
 
     def run_generator(self):
         self.tracker_core.run_generator(None, None)
@@ -981,7 +984,6 @@ class TrackerGameContext(CommonContext):
             self.defered_entrance_datastorage_keys = []
             # TODO: persist these per url+slot(+seed)?
             self.tracker_core.ignored_locations.clear()
-            self.tracker_core.location_alias_map = {}
             self.set_page("Connect to a slot to start tracking!")
             if hasattr(self, "tracker_total_locs_label"):
                 self.tracker_total_locs_label.text = f"Locations: 0/0"
