@@ -159,6 +159,24 @@ class TrackerCommandProcessor(ClientCommandProcessor):
         self.ctx.tracker_core.ignored_locations.clear()
         self.ctx.updateTracker()
         logger.info("Reset ignored locations.")
+    def _cmd_next_progression(self):
+        """Finds all items that will unlock a check immediately when collected, and a best guess of how many new checks they will unlock."""
+        updateTracker(self.ctx)
+        baseLocs = len(self.ctx.locations_available)
+        counter = Counter()
+        items_to_check = {item.name for item in self.ctx.multiworld.get_items() if item.player == self.ctx.player_id and item.advancement}
+        for item in items_to_check:
+            self.ctx.manual_items.append(item)
+            updateTracker(self.ctx)
+            newlocs = len(self.ctx.locations_available) - baseLocs
+            if newlocs:
+                counter[item] = newlocs
+            self.ctx.manual_items.pop()
+        if not counter:
+            logger.info("No item will unlock any checks right now.")
+        for (item, count) in counter.most_common():
+            logger.info(f"{item} unlocks {count} check{'s' if count > 1 else ''}.")
+        updateTracker(self.ctx)
 
     def _cmd_toggle_auto_tab(self):
         """Toggle the auto map tabbing function"""
