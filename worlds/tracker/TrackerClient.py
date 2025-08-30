@@ -229,8 +229,8 @@ class TrackerGameContext(CommonContext):
     tracker_page = None
     map_page = None
     tracker_world: UTMapTabData | None = None
-    coord_dict: dict[str, list] = {}
-    map_page_coords_func = None
+    coord_dict: dict[int, list] = {}
+    map_page_coords_func = lambda *args: {}
     watcher_task = None
     auto_tab = True
     update_callback: Callable[[list[str]], bool] | None = None
@@ -691,9 +691,9 @@ class TrackerGameContext(CommonContext):
 
         class VisualTracker(BoxLayout):
             location_icon: ApLocationIcon
-            def load_coords(self, coords, use_split):
+            def load_coords(self,  coords: dict[tuple,list[int]], use_split) -> dict[int,list]:
                 self.ids.location_canvas.clear_widgets()
-                returnDict = defaultdict(list)
+                returnDict: dict[int,list] = defaultdict(list)
                 for coord, sections in coords.items():
                     # https://discord.com/channels/731205301247803413/1170094879142051912/1272327822630977727
                     ap_location_class = APLocationSplit if use_split else APLocationMixed
@@ -739,7 +739,7 @@ class TrackerGameContext(CommonContext):
                     self.log_to_tab(line, False)
         except Exception as e:
             # TODO back compat, fail gracefully if a kivy app doesn't have our properties
-            self.map_page_coords_func = lambda *args: None
+            self.map_page_coords_func = lambda *args: {}
             tb = traceback.format_exc()
             print(tb)
         manager.add_client_tab("Tracker Page", tracker)
