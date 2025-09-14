@@ -9,7 +9,7 @@ import sys
 from typing import Union, Any, TYPE_CHECKING
 
 
-from BaseClasses import CollectionState, MultiWorld, LocationProgressType, ItemClassification
+from BaseClasses import CollectionState, MultiWorld, LocationProgressType, ItemClassification, Location
 from worlds.generic.Rules import exclusion_rules
 from Utils import __version__, output_path, open_filename,async_start
 from worlds import AutoWorld
@@ -184,15 +184,25 @@ class TrackerCommandProcessor(ClientCommandProcessor):
         logger.info(f"Auto tracking currently {'Enabled' if self.ctx.auto_tab else 'Disabled'}")
 
     @mark_raw
-    def _cmd_get_logical_path(self, location_name: str = ""):
-        """Finds a logical expected path to a particular location by name"""
+    def _cmd_get_logical_path(self, dest_name: str = ""):
+        """Finds a logical expected path to a particular location or region by name"""
         if not self.ctx.game:
             logger.info("Not yet loaded into a game")
             return
         if self.ctx.stored_data and "_read_race_mode" in self.ctx.stored_data and self.ctx.stored_data["_read_race_mode"]:
             logger.info("Logical Path is disabled during Race Mode")
             return
-        get_logical_path(self.ctx, location_name)
+        get_logical_path(self.ctx, dest_name)
+    
+    @mark_raw
+    def _cmd_explain(self,lookup_name:str=""):
+        """Explains the rule for a location, if the world supports it"""
+        if not self.ctx.game:
+            logger.info("Not yet loaded into a game")
+        if self.ctx.stored_data and "_read_race_mode" in self.ctx.stored_data and self.ctx.stored_data["_read_race_mode"]:
+            logger.info("Explain is disabled during Race Mode")
+            return
+        explain(self.ctx, lookup_name)
 
     def _cmd_faris_asked(self):
         """Print out the error message and any other information we think might be useful"""
@@ -202,6 +212,9 @@ class TrackerCommandProcessor(ClientCommandProcessor):
             if self.ctx.tracker_core.launch_multiworld is not None:
                 known_slots = [f"{slot_name} ({self.ctx.tracker_core.launch_multiworld.worlds[slot_id].game})" for slot_name, slot_id in self.ctx.tracker_core.launch_multiworld.world_name_lookup.items() if self.ctx.tracker_core.launch_multiworld.worlds[slot_id].game != "Archipelago"]
                 logger.error(f"Known slots = [{', '.join(known_slots)}]")
+        from worlds import failed_world_loads
+        if failed_world_loads:
+            logger.error(f"Worlds that failed to load [{', '.join(failed_world_loads)}]")
 
 
 def cmd_load_map(self: TrackerCommandProcessor, map_id: str = "0"):
@@ -1015,6 +1028,34 @@ def load_json_zip(pack, path):
         with parentFile.open(path) as childFile:
             return json.loads(childFile.read().decode('utf-8-sig'))
 
+def explain(ctx: TrackerGameContext, dest_name: str):
+    if ctx.tracker_core.player_id is None or ctx.tracker_core.multiworld is None:
+        logger.error("Player YAML not installed or Generator failed")
+        ctx.set_page(f"Check Player YAMLs for error; Tracker {UT_VERSION} for AP version {__version__}")
+        return
+    current_world = ctx.tracker_core.get_current_world()
+    assert current_world
+
+    if hasattr(current_world,"explain_rule"):
+        state = ctx.updateTracker().state
+        ctx.ui.print_json(current_world.explain_rule(dest_name,state))
+        return
+
+    if dest_name in current_world.location_name_to_id:
+        dest_id = current_world.location_name_to_id[dest_name]
+        if dest_id not in ctx.server_locations:
+            logger.error("Location not found")
+            return
+        location = ctx.tracker_core.multiworld.get_location(dest_name, ctx.tracker_core.player_id)
+        state = ctx.updateTracker().state
+        if not state: return
+        if hasattr(location.access_rule,"explain_json"):
+            ctx.ui.print_json(location.access_rule.explain_json(state))
+        elif location.access_rule is Location.access_rule:
+            logger.info("Location has a default access rule")
+        else:
+            logger.info("Location doesn't have a rule that supports explanation")
+    pass
 
 def get_logical_path(ctx: TrackerGameContext, dest_name: str):
     if ctx.tracker_core.player_id is None or ctx.tracker_core.multiworld is None:
@@ -1025,6 +1066,12 @@ def get_logical_path(ctx: TrackerGameContext, dest_name: str):
     state = None
     current_world = ctx.tracker_core.get_current_world()
     assert current_world
+
+    if hasattr(current_world,"get_logical_path"):
+        state = ctx.updateTracker().state
+        ctx.ui.print_json(current_world.get_logical_path(dest_name,state))
+        return
+
     if dest_name in current_world.location_name_to_id:
         
         dest_id = current_world.location_name_to_id[dest_name]

@@ -146,8 +146,13 @@ class TrackerCore():
                 report_type = "Location"
         else:
             report_type = "Region"
-        return tracker_settings['player_files_path'], report_type, tracker_settings[
-            'hide_excluded_locations'], tracker_settings["use_split_map_icons"]
+        defered_mode = DeferredEntranceMode.default
+        try:
+            defered_mode = DeferredEntranceMode(tracker_settings["enforce_deferred_entrances"])
+        except:
+            tracker_settings["enforce_deferred_entrances"] =  DeferredEntranceMode.default
+        return tracker_settings['player_files_path'], report_type, tracker_settings['hide_excluded_locations'],\
+            tracker_settings["use_split_map_icons"], defered_mode
     
     def run_generator(self, slot_data: dict | None = None, override_yaml_path: str | None = None, super_override_yaml_path: str|None = None):
         def move_slots(args: "Namespace", slot_name: str):
@@ -184,7 +189,7 @@ class TrackerCore():
                 args[option_name].update(player_mapping)
 
         try:
-            yaml_path, self.output_format, self.hide_excluded, self.use_split = self._set_host_settings()
+            yaml_path, self.output_format, self.hide_excluded, self.use_split, self.enforce_deferred_connections = self._set_host_settings()
             # strip command line args, they won't be useful from the client anyway
             sys.argv = sys.argv[:1]
             args = mystery_argparse()

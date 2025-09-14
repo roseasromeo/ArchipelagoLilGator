@@ -39,6 +39,8 @@ class CurrentTrackerState(NamedTuple):
         return CurrentTrackerState(Counter(),Counter(),[],[],[],[],[],[],[],None)
 
 class DeferredEntranceMode(Enum):
+    """Determines how worlds should be allowed to use deferred entrances"""
+
     forced = "on"
     default = "default"
     disabled = "off"
@@ -64,6 +66,7 @@ class TrackerSettings(Group):
     include_location_name: LocationNameBool | bool = True
     hide_excluded_locations: HideExcluded | bool = False
     use_split_map_icons: UseSplitMapIcons | bool = True
+    enforce_deferred_entrances: DeferredEntranceMode | str = "default"
 
 
 class TrackerWorld(World):
