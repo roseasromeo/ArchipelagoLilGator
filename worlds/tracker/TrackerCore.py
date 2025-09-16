@@ -270,7 +270,7 @@ class TrackerCore():
         multiworld.generation_is_fake = True
         if self.re_gen_passthrough is not None:
             multiworld.re_gen_passthrough = self.re_gen_passthrough
-        multiworld.enforce_deferred_connections = self.enforce_deferred_connections
+        multiworld.enforce_deferred_connections = self.enforce_deferred_connections.value
 
         multiworld.set_seed(seed, args.race, str(args.outputname) if args.outputname else None)
         multiworld.game = args.game.copy()
