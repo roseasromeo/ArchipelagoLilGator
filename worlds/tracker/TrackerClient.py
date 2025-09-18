@@ -929,6 +929,7 @@ class TrackerGameContext(CommonContext):
 
     def run_generator(self):
         self.tracker_core.run_generator(None, None)
+        self.use_split = self.tracker_core.use_split #fancy hack
 
     def on_package(self, cmd: str, args: dict):
         try:
