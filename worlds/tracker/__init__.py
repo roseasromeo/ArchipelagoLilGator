@@ -67,13 +67,20 @@ class TrackerSettings(Group):
     
     class DisplayGlitchedLogic(Bool):
         """Enable showing Glitched/yellow logic in tracker tab"""
+    
+    class SettingDeferredEntranceMode(str):
+        """Determines how worlds should be allowed to use deferred entrances
+        on: Force worlds to disconnect entrances
+        default: Allow worlds to decide if entrances should be deferred
+        off: Force worlds to connect all entrances
+        """
 
     player_files_path: TrackerPlayersPath = TrackerPlayersPath("Players")
     include_region_name: RegionNameBool | bool = False
     include_location_name: LocationNameBool | bool = True
     hide_excluded_locations: HideExcluded | bool = False
     use_split_map_icons: UseSplitMapIcons | bool = True
-    enforce_deferred_entrances: DeferredEntranceMode | str = "default"
+    enforce_deferred_entrances: SettingDeferredEntranceMode | str = "default"
     display_glitched_logic: DisplayGlitchedLogic | bool = True
 
 
