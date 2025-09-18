@@ -1121,11 +1121,11 @@ def explain(ctx: TrackerGameContext, dest_name: str):
         for entrance in parent_region.entrances:
             if entrance.parent_region:
                 if hasattr(entrance.access_rule,"explain_json"):
-                    returned_json:list[JSONMessagePart] = [{"type":"text","text":f"{entrance.parent_region.name} : {entrance.name}"}]
+                    returned_json:list[JSONMessagePart] = [{"type":"text","text":f"{entrance.parent_region.name} ({entrance.parent_region.can_reach(state)}): {entrance.name}"}]
                     returned_json.extend(entrance.access_rule.explain_json(state))
                     ctx.ui.print_json(returned_json)
                 else:
-                    ctx.ui.print_json([{"type":"text","text":f"{entrance.parent_region.name} : {entrance.name} : {entrance.access_rule(state)}"}])
+                    ctx.ui.print_json([{"type":"text","text":f"{entrance.parent_region.name} ({entrance.parent_region.can_reach(state)}): {entrance.name} : {entrance.access_rule(state)}"}])
         
 
 def get_logical_path(ctx: TrackerGameContext, dest_name: str):
