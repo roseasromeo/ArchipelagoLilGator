@@ -64,6 +64,9 @@ class TrackerSettings(Group):
     
     class UseSplitMapIcons(Bool):
         """Use split icons rather then mixed for the UT map tab"""
+    
+    class DisplayGlitchedLogic(Bool):
+        """Enable showing Glitched/yellow logic in tracker tab"""
 
     player_files_path: TrackerPlayersPath = TrackerPlayersPath("Players")
     include_region_name: RegionNameBool | bool = False
@@ -71,6 +74,7 @@ class TrackerSettings(Group):
     hide_excluded_locations: HideExcluded | bool = False
     use_split_map_icons: UseSplitMapIcons | bool = True
     enforce_deferred_entrances: DeferredEntranceMode | str = "default"
+    display_glitched_logic: DisplayGlitchedLogic | bool = True
 
 
 class TrackerWorld(World):

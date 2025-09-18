@@ -38,6 +38,7 @@ class TrackerCore():
         self.launch_multiworld = None
         self.multiworld = None
         self.enforce_deferred_connections = DeferredEntranceMode.default
+        self.enable_glitched_logic = True
         self.glitched_locations = []
         self.quit_after_update = print_list or print_count
         self.print_list = print_list
@@ -152,7 +153,7 @@ class TrackerCore():
         except:
             tracker_settings["enforce_deferred_entrances"] =  DeferredEntranceMode.default
         return tracker_settings['player_files_path'], report_type, tracker_settings['hide_excluded_locations'],\
-            tracker_settings["use_split_map_icons"], defered_mode
+            tracker_settings["use_split_map_icons"], defered_mode, tracker_settings['display_glitched_logic']
     
     def run_generator(self, slot_data: dict | None = None, override_yaml_path: str | None = None, super_override_yaml_path: str|None = None):
         def move_slots(args: "Namespace", slot_name: str):
@@ -189,7 +190,7 @@ class TrackerCore():
                 args[option_name].update(player_mapping)
 
         try:
-            yaml_path, self.output_format, self.hide_excluded, self.use_split, self.enforce_deferred_connections = self._set_host_settings()
+            yaml_path, self.output_format, self.hide_excluded, self.use_split, self.enforce_deferred_connections, self.enable_glitched_logic = self._set_host_settings()
             # strip command line args, they won't be useful from the client anyway
             sys.argv = sys.argv[:1]
             args = mystery_argparse()
@@ -406,30 +407,31 @@ class TrackerCore():
                             region = ""
                             if temp_loc.parent_region is not None:  
                                 region = temp_loc.parent_region.name
-                            temp_name = temp_loc.name
-                            if temp_loc.address in self.location_alias_map:
-                                temp_name += f" ({self.location_alias_map[temp_loc.address]})"
-                            if self.output_format == "Both":
-                                if temp_loc.progress_type == LocationProgressType.EXCLUDED:
-                                    self.log_to_tab("[color="+self.get_ut_color("out_of_logic_glitched") + "]" +region + " | " + temp_name+"[/color]", True)
-                                elif temp_loc.address in self.hints:
-                                    self.log_to_tab("[color="+self.get_ut_color("hinted_glitched") + "]" +region + " | " + temp_name+"[/color]", True)
-                                    hinted_locations.append(temp_loc)
-                                else:
-                                    self.log_to_tab("[color="+self.get_ut_color("glitched") + "]" +region + " | " + temp_name+"[/color]", True)
-                                readable_locations.append(region + " | " + temp_name)
-                            elif self.output_format == "Location":
-                                if temp_loc.progress_type == LocationProgressType.EXCLUDED:
-                                    self.log_to_tab("[color="+self.get_ut_color("out_of_logic_glitched") + "]" +temp_name+"[/color]", True)
-                                elif temp_loc.address in self.hints:
-                                    self.log_to_tab("[color="+self.get_ut_color("hinted_glitched") + "]" +temp_name+"[/color]", True)
-                                    hinted_locations.append(temp_loc)
-                                else:
-                                    self.log_to_tab("[color="+self.get_ut_color("glitched") + "]" +temp_name+"[/color]", True)
-                                readable_locations.append(temp_name)
+                            if self.enable_glitched_logic:
+                                temp_name = temp_loc.name
+                                if temp_loc.address in self.location_alias_map:
+                                    temp_name += f" ({self.location_alias_map[temp_loc.address]})"
+                                if self.output_format == "Both":
+                                    if temp_loc.progress_type == LocationProgressType.EXCLUDED:
+                                        self.log_to_tab("[color="+self.get_ut_color("out_of_logic_glitched") + "]" +region + " | " + temp_name+"[/color]", True)
+                                    elif temp_loc.address in self.hints:
+                                        self.log_to_tab("[color="+self.get_ut_color("hinted_glitched") + "]" +region + " | " + temp_name+"[/color]", True)
+                                        hinted_locations.append(temp_loc)
+                                    else:
+                                        self.log_to_tab("[color="+self.get_ut_color("glitched") + "]" +region + " | " + temp_name+"[/color]", True)
+                                    readable_locations.append(region + " | " + temp_name)
+                                elif self.output_format == "Location":
+                                    if temp_loc.progress_type == LocationProgressType.EXCLUDED:
+                                        self.log_to_tab("[color="+self.get_ut_color("out_of_logic_glitched") + "]" +temp_name+"[/color]", True)
+                                    elif temp_loc.address in self.hints:
+                                        self.log_to_tab("[color="+self.get_ut_color("hinted_glitched") + "]" +temp_name+"[/color]", True)
+                                        hinted_locations.append(temp_loc)
+                                    else:
+                                        self.log_to_tab("[color="+self.get_ut_color("glitched") + "]" +temp_name+"[/color]", True)
+                                    readable_locations.append(temp_name)
                             if region not in regions:
                                 regions.append(region)
-                                if self.output_format == "Region":
+                                if self.output_format == "Region" and self.enable_glitched_logic:
                                     self.log_to_tab("[color="+self.get_ut_color("glitched")+"]"+region+"[/color]", True)
                                     readable_locations.append(region)
                     except Exception:
