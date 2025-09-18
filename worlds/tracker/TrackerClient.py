@@ -1085,33 +1085,48 @@ def load_json_zip(pack, path):
             return json.loads(childFile.read().decode('utf-8-sig'))
 
 def explain(ctx: TrackerGameContext, dest_name: str):
+    from NetUtils import JSONMessagePart
     if ctx.tracker_core.player_id is None or ctx.tracker_core.multiworld is None:
         logger.error("Player YAML not installed or Generator failed")
         ctx.set_page(f"Check Player YAMLs for error; Tracker {UT_VERSION} for AP version {__version__}")
         return
     current_world = ctx.tracker_core.get_current_world()
     assert current_world
+    state = ctx.updateTracker().state
+    if not state: return
 
     if hasattr(current_world,"explain_rule"):
-        state = ctx.updateTracker().state
-        ctx.ui.print_json(current_world.explain_rule(dest_name,state))
-        return
-
-    if dest_name in current_world.location_name_to_id:
+        returned_json = current_world.explain_rule(dest_name,state)
+        if returned_json:
+            ctx.ui.print_json(returned_json)
+            return
+    parent_region = None
+    if dest_name in ctx.tracker_core.multiworld.regions.location_cache[ctx.tracker_core.player_id]:
         dest_id = current_world.location_name_to_id[dest_name]
         if dest_id not in ctx.server_locations:
             logger.error("Location not found")
             return
         location = ctx.tracker_core.multiworld.get_location(dest_name, ctx.tracker_core.player_id)
-        state = ctx.updateTracker().state
-        if not state: return
         if hasattr(location.access_rule,"explain_json"):
             ctx.ui.print_json(location.access_rule.explain_json(state))
         elif location.access_rule is Location.access_rule:
             logger.info("Location has a default access rule")
         else:
             logger.info("Location doesn't have a rule that supports explanation")
-    pass
+        parent_region = location.parent_region
+    elif dest_name in ctx.tracker_core.multiworld.regions.region_cache[ctx.tracker_core.player_id]:
+        parent_region = ctx.tracker_core.multiworld.get_region(dest_name,ctx.tracker_core.player_id)
+    if parent_region:
+        logger.info(parent_region.name)
+        for entrance in parent_region.entrances:
+            if entrance.parent_region:
+                if hasattr(entrance.access_rule,"explain_json"):
+                    returned_json:list[JSONMessagePart] = [{"type":"text","text":f"{entrance.parent_region.name} : {entrance.name}"}]
+                    returned_json.extend(entrance.access_rule.explain_json(state))
+                    ctx.ui.print_json(returned_json)
+                else:
+                    ctx.ui.print_json([{"type":"text","text":f"{entrance.parent_region.name} : {entrance.name} : {entrance.access_rule(state)}"}])
+        
 
 def get_logical_path(ctx: TrackerGameContext, dest_name: str):
     if ctx.tracker_core.player_id is None or ctx.tracker_core.multiworld is None:
@@ -1125,15 +1140,12 @@ def get_logical_path(ctx: TrackerGameContext, dest_name: str):
 
     if hasattr(current_world,"get_logical_path"):
         state = ctx.updateTracker().state
-        ctx.ui.print_json(current_world.get_logical_path(dest_name,state))
-        return
-
-    if dest_name in current_world.location_name_to_id:
-        
-        dest_id = current_world.location_name_to_id[dest_name]
-        if dest_id not in ctx.server_locations:
-            logger.error("Location not found")
+        returned_json = current_world.get_logical_path(dest_name,state)
+        if returned_json:
+            ctx.ui.print_json(returned_json)
             return
+
+    if dest_name in [loc.name for loc in ctx.tracker_core.multiworld.get_locations(ctx.tracker_core.player_id)]:
         location = ctx.tracker_core.multiworld.get_location(dest_name, ctx.tracker_core.player_id)
         state = ctx.updateTracker().state
         if not state: return
