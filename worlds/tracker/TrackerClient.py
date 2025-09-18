@@ -1101,6 +1101,7 @@ def explain(ctx: TrackerGameContext, dest_name: str):
             ctx.ui.print_json(returned_json)
             return
     parent_region = None
+    location = None
     if dest_name in ctx.tracker_core.multiworld.regions.location_cache[ctx.tracker_core.player_id]:
         dest_id = current_world.location_name_to_id[dest_name]
         if dest_id not in ctx.server_locations:
@@ -1117,11 +1118,12 @@ def explain(ctx: TrackerGameContext, dest_name: str):
     elif dest_name in ctx.tracker_core.multiworld.regions.region_cache[ctx.tracker_core.player_id]:
         parent_region = ctx.tracker_core.multiworld.get_region(dest_name,ctx.tracker_core.player_id)
     if parent_region:
-        logger.info(parent_region.name)
+        if location:
+            logger.info(f"Parent region ({parent_region.name})")
         for entrance in parent_region.entrances:
             if entrance.parent_region:
                 if hasattr(entrance.access_rule,"explain_json"):
-                    returned_json:list[JSONMessagePart] = [{"type":"text","text":f"{entrance.parent_region.name} ({entrance.parent_region.can_reach(state)}): {entrance.name}"}]
+                    returned_json:list[JSONMessagePart] = [{"type":"text","text":f"{entrance.parent_region.name} ({entrance.parent_region.can_reach(state)}): {entrance.name} "}]
                     returned_json.extend(entrance.access_rule.explain_json(state))
                     ctx.ui.print_json(returned_json)
                 else:
