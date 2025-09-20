@@ -535,6 +535,22 @@ class TrackerGameContext(CommonContext):
                 "name" in section and section["name"] in entrance_cache for section in location["sections"]
             )
         }
+        poptracker_entrance_mapping = self.tracker_world.poptracker_entrance_mapping
+        if poptracker_entrance_mapping:
+            tempCoords = {
+                (map_loc["x"],map_loc["y"]):[poptracker_entrance_mapping[section["name"]] for section in location["sections"]
+                    if "name" in section and  section["name"] in poptracker_entrance_mapping and poptracker_entrance_mapping[section["name"]] in entrance_cache]
+                for location in map_locs
+                for map_loc in location["map_locations"]
+                if map_loc["map"] == m["name"] and any(
+                    "name" in section and  section["name"] in poptracker_entrance_mapping and poptracker_entrance_mapping[section["name"]] in entrance_cache for section in location["sections"]
+                )
+            }
+            for maploc, seclist in tempCoords.items():
+                if maploc in dcoords:
+                    dcoords[maploc] += seclist
+                else:
+                    dcoords[maploc] = seclist
         self.coord_dict,self.deferred_dict = self.map_page_coords_func(coords,dcoords,self.use_split)
         if self.tracker_world.location_setting_key:
             self.update_location_icon_coords()
