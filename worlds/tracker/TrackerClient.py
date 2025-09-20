@@ -682,16 +682,26 @@ class TrackerGameContext(CommonContext):
 
             @staticmethod
             def update_color(self, entranceDict):
-                passable = any(status.endswith("passable") for status in entranceDict.values())
-                impassable = any(status.endswith("impassable") for status in entranceDict.values())
+                passable = any(status == "passable" for status in entranceDict.values())
+                impassable = any(status == "impassable" for status in entranceDict.values())
                 if passable:
                     self.color = "#"+get_ut_color("in_logic")
                 elif impassable:
                     self.color = "#"+get_ut_color("out_of_logic")
                 else:
                     self.color = "#"+get_ut_color("collected")
-
-
+            
+            def get_text(self):
+                ctx = manager.get_running_app().ctx
+                sReturn = []
+                for entrance, status in self.locationDict.items():
+                    color = get_ut_color("out_of_logic")
+                    if status == "passed":
+                        color = get_ut_color("collected_light")
+                    elif status == "passable":
+                        color = get_ut_color("in_logic")
+                    sReturn.append(f"{entrance} : [color={color}]{status}[/color]")
+                return "\n".join(sReturn)
 
             
         class APLocationMixed(ApLocation):
