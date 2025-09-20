@@ -985,7 +985,7 @@ class TrackerGameContext(CommonContext):
                 if self.defered_entrance_datastorage_keys:
                     if isinstance(self.defered_entrance_datastorage_keys,str):
                         self.defered_entrance_datastorage_keys = [self.defered_entrance_datastorage_keys]
-                    self.defered_entrance_datastorage_keys = [key.format(player=self.tracker_core.player_id, team=self.team) for key in self.defered_entrance_datastorage_keys]
+                    self.defered_entrance_datastorage_keys = [key.format(player=self.slot, team=self.team) for key in self.defered_entrance_datastorage_keys]
                     self.defered_entrance_callback = getattr(self.tracker_core.get_current_world(),"reconnect_found_entrances",None)
                     if not self.defered_entrance_callback or not callable(self.defered_entrance_callback):
                         self.defered_entrance_callback = None
