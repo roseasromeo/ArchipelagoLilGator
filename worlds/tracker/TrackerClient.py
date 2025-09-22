@@ -1027,11 +1027,13 @@ class TrackerGameContext(CommonContext):
                             self.updateTracker()
                         elif args["key"] == icon_key:
                             self.update_location_icon_coords()
-                        elif args["key"] in self.defered_entrance_datastorage_keys:
-                            self.update_defered_entrances(args["key"])
                     elif "keys" in args:
                         if icon_key in args["keys"]:
                             self.update_location_icon_coords()
+                if self.defered_entrance_datastorage_keys:
+                    if "key" in args and args["key"] in self.defered_entrance_datastorage_keys:
+                            self.update_defered_entrances(args["key"])
+                    elif "keys" in args:
                         for key in self.defered_entrance_datastorage_keys:
                             if key in args["keys"]:
                                 self.update_defered_entrances(key)
