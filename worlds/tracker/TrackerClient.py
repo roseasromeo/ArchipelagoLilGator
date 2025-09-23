@@ -165,18 +165,21 @@ class TrackerCommandProcessor(ClientCommandProcessor):
         updateTracker(self.ctx)
         baseLocs = len(self.ctx.tracker_core.locations_available)
         counter = Counter()
+        goal_items = []
         items_to_check = {item.name for item in self.ctx.tracker_core.multiworld.get_items() if item.player == self.ctx.tracker_core.player_id and item.advancement}
         for item in items_to_check:
             self.ctx.tracker_core.manual_items.append(item)
-            updateTracker(self.ctx)
+            update_ret = updateTracker(self.ctx)
             newlocs = len(self.ctx.tracker_core.locations_available) - baseLocs
             if newlocs:
                 counter[item] = newlocs
+            if self.ctx.tracker_core.multiworld.completion_condition[self.ctx.tracker_core.player_id](update_ret.state):
+                goal_items.append(item)
             self.ctx.tracker_core.manual_items.pop()
         if not counter:
             logger.info("No item will unlock any checks right now.")
         for (item, count) in counter.most_common():
-            logger.info(f"{item} unlocks {count} check{'s' if count > 1 else ''}.")
+            logger.info(f"{item} unlocks {count} check{'s' if count > 1 else ''}{' (and goal)' if item in goal_items else ''}.")
         updateTracker(self.ctx)
 
     def _cmd_toggle_auto_tab(self):
