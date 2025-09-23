@@ -696,6 +696,7 @@ class TrackerGameContext(CommonContext):
             
             def get_text(self):
                 ctx = manager.get_running_app().ctx
+                host_world:AutoWorld.World = ctx.tracker_core.get_current_world()
                 sReturn = []
                 for entrance, status in self.locationDict.items():
                     color = get_ut_color("out_of_logic")
@@ -704,6 +705,10 @@ class TrackerGameContext(CommonContext):
                     elif status == "passable":
                         color = get_ut_color("in_logic")
                     sReturn.append(f"{entrance} : [color={color}]{status}[/color]")
+                    if host_world:
+                        real_entrance = host_world.get_entrance(entrance)
+                        if real_entrance.connected_region:
+                            sReturn.append(f"\tconnects to ({real_entrance.connected_region.name})")
                 return "\n".join(sReturn)
 
             
