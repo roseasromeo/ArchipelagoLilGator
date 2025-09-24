@@ -704,7 +704,15 @@ class TrackerGameContext(CommonContext):
                         color = get_ut_color("collected_light")
                     elif status == "passable":
                         color = get_ut_color("in_logic")
-                    sReturn.append(f"{entrance} : [color={color}]{status}[/color]")
+                    poptracker_entrance_mapping: dict[str, str] | None = ctx.tracker_world.poptracker_entrance_mapping
+                    if poptracker_entrance_mapping:
+                        try:
+                            entrance_name = next(key for key in poptracker_entrance_mapping if poptracker_entrance_mapping[key] == entrance)
+                        except StopIteration:
+                            entrance_name = entrance
+                    else:
+                        entrance_name = entrance
+                    sReturn.append(f"{entrance_name} : [color={color}]{status}[/color]")
                     if host_world:
                         real_entrance = host_world.get_entrance(entrance)
                         if real_entrance.connected_region:
